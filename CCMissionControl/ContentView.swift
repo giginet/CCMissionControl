@@ -8,9 +8,13 @@ final class AgentListViewModel {
     private(set) var error: (any Error)?
     private(set) var isScanning = false
     private(set) var unreadPaneIDs: Set<Int> = []
-    var onSessionCompleted: ((Agent) -> Void)?
+    let notificationService: any NotificationServiceProtocol
     private var previousStatusByPaneID: [Int: Agent.Status] = [:]
     private var timer: Timer?
+
+    init(notificationService: some NotificationServiceProtocol = SystemNotificationService.shared) {
+        self.notificationService = notificationService
+    }
 
     func startScanning() {
         guard timer == nil else { return }
@@ -43,7 +47,7 @@ final class AgentListViewModel {
             let previousStatus = previousStatusByPaneID[agent.paneID]
             if previousStatus == .running && agent.status == .idle && !agent.isActive {
                 unreadPaneIDs.insert(agent.paneID)
-                onSessionCompleted?(agent)
+                notificationService.sendCompletionNotification(for: agent)
             }
             if agent.isActive {
                 unreadPaneIDs.remove(agent.paneID)
@@ -133,7 +137,7 @@ struct FooterView: View {
         .padding(.horizontal, 12)
         .padding(.vertical, 8)
         .task {
-            notificationStatus = await NotificationService.shared.getAuthorizationStatus()
+            notificationStatus = await SystemNotificationService.shared.getAuthorizationStatus()
         }
     }
 

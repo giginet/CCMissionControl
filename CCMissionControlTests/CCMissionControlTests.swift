@@ -242,6 +242,12 @@ struct ProcessEntryTests {
 
 @MainActor
 struct UnreadBadgeTests {
+    private func makeViewModel() -> (AgentListViewModel, MockNotificationService) {
+        let mock = MockNotificationService()
+        let vm = AgentListViewModel(notificationService: mock)
+        return (vm, mock)
+    }
+
     private func makeAgent(
         paneID: Int = 0,
         status: Agent.Status,
@@ -262,7 +268,7 @@ struct UnreadBadgeTests {
     // MARK: - No badge for focused pane
 
     @Test func noUnreadWhenFocusedPane_RunningToIdle() {
-        let vm = AgentListViewModel()
+        let (vm, _) = makeViewModel()
 
         // User keeps focus on this pane during running→idle
         vm.applyResult([makeAgent(status: .running, isActive: true)])
@@ -273,7 +279,7 @@ struct UnreadBadgeTests {
     // MARK: - Badge for unfocused pane
 
     @Test func unreadWhenUnfocusedPane_RunningToIdle() {
-        let vm = AgentListViewModel()
+        let (vm, _) = makeViewModel()
 
         // Claude Code running in another tab (unfocused) transitions to idle
         vm.applyResult([makeAgent(status: .running, isActive: false)])
@@ -284,7 +290,7 @@ struct UnreadBadgeTests {
     // MARK: - Mark as read on click
 
     @Test func markAsReadClearsBadge() {
-        let vm = AgentListViewModel()
+        let (vm, _) = makeViewModel()
 
         vm.applyResult([makeAgent(status: .running, isActive: false)])
         vm.applyResult([makeAgent(status: .idle, isActive: false)])
@@ -297,7 +303,7 @@ struct UnreadBadgeTests {
     // MARK: - No badge for idle→idle
 
     @Test func noUnreadWhenIdleToIdle() {
-        let vm = AgentListViewModel()
+        let (vm, _) = makeViewModel()
 
         vm.applyResult([makeAgent(status: .idle, isActive: false)])
         vm.applyResult([makeAgent(status: .idle, isActive: false)])
@@ -307,7 +313,7 @@ struct UnreadBadgeTests {
     // MARK: - No badge on first scan
 
     @Test func noUnreadOnFirstScan() {
-        let vm = AgentListViewModel()
+        let (vm, _) = makeViewModel()
 
         // previousStatus is nil → not a running→idle transition, so no unread
         vm.applyResult([makeAgent(status: .idle, isActive: false)])
@@ -317,7 +323,7 @@ struct UnreadBadgeTests {
     // MARK: - Multiple sessions are independent
 
     @Test func multipleSessionsIndependent() {
-        let vm = AgentListViewModel()
+        let (vm, _) = makeViewModel()
 
         // pane 0: focused, pane 1: another tab (unfocused)
         vm.applyResult([
@@ -337,7 +343,7 @@ struct UnreadBadgeTests {
     // MARK: - Focus change timing
 
     @Test func focusedWhileRunning_UnfocusedWhenIdle_ShowsBadge() {
-        let vm = AgentListViewModel()
+        let (vm, _) = makeViewModel()
 
         // Focused while running
         vm.applyResult([makeAgent(status: .running, isActive: true)])
@@ -348,7 +354,7 @@ struct UnreadBadgeTests {
     }
 
     @Test func unfocusedWhileRunning_FocusedWhenIdle_NoBadge() {
-        let vm = AgentListViewModel()
+        let (vm, _) = makeViewModel()
 
         // Unfocused while running
         vm.applyResult([makeAgent(status: .running, isActive: false)])
@@ -361,7 +367,7 @@ struct UnreadBadgeTests {
     // MARK: - Unread cleared when focus returns
 
     @Test func unreadClearedByFocusReturn() {
-        let vm = AgentListViewModel()
+        let (vm, _) = makeViewModel()
 
         // Create unread state
         vm.applyResult([makeAgent(status: .running, isActive: false)])
@@ -376,10 +382,29 @@ struct UnreadBadgeTests {
     // MARK: - No badge for running→running
 
     @Test func noUnreadWhenRunningToRunning() {
-        let vm = AgentListViewModel()
+        let (vm, _) = makeViewModel()
 
         vm.applyResult([makeAgent(status: .running, isActive: false)])
         vm.applyResult([makeAgent(status: .running, isActive: false)])
         #expect(vm.unreadPaneIDs.isEmpty)
+    }
+
+    // MARK: - Notification sent on completion
+
+    @Test func notificationSentWhenUnfocusedSessionCompletes() {
+        let (vm, mock) = makeViewModel()
+
+        vm.applyResult([makeAgent(status: .running, isActive: false)])
+        vm.applyResult([makeAgent(status: .idle, isActive: false)])
+        #expect(mock.notifiedAgents.count == 1)
+        #expect(mock.notifiedAgents[0].paneID == 0)
+    }
+
+    @Test func noNotificationWhenFocusedSessionCompletes() {
+        let (vm, mock) = makeViewModel()
+
+        vm.applyResult([makeAgent(status: .running, isActive: true)])
+        vm.applyResult([makeAgent(status: .idle, isActive: true)])
+        #expect(mock.notifiedAgents.isEmpty)
     }
 }

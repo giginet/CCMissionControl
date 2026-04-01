@@ -1,8 +1,13 @@
 import AppKit
 import UserNotifications
 
-final class NotificationService: NSObject, UNUserNotificationCenterDelegate, Sendable {
-    static let shared = NotificationService()
+protocol NotificationServiceProtocol: Sendable {
+    func sendCompletionNotification(for agent: Agent)
+    func getAuthorizationStatus() async -> UNAuthorizationStatus
+}
+
+final class SystemNotificationService: NSObject, NotificationServiceProtocol, UNUserNotificationCenterDelegate {
+    static let shared = SystemNotificationService()
 
     private override init() {
         super.init()
@@ -69,5 +74,17 @@ final class NotificationService: NSObject, UNUserNotificationCenterDelegate, Sen
         withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void
     ) {
         completionHandler([.banner, .sound, .list])
+    }
+}
+
+final class MockNotificationService: NotificationServiceProtocol, @unchecked Sendable {
+    private(set) var notifiedAgents: [Agent] = []
+
+    func sendCompletionNotification(for agent: Agent) {
+        notifiedAgents.append(agent)
+    }
+
+    func getAuthorizationStatus() async -> UNAuthorizationStatus {
+        .authorized
     }
 }
