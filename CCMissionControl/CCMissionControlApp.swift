@@ -29,7 +29,7 @@ struct MenuBarLabel: View {
             }
             Image(systemName: runningCount > 0 ? "bolt.fill" : "powersleep")
                 .imageScale(.small)
-            Text("\(totalCount)")
+            Text("\(runningCount > 0 ? runningCount : totalCount)")
                 .monospacedDigit()
         }
     }
