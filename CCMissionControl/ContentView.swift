@@ -8,6 +8,7 @@ final class AgentListViewModel {
     private(set) var error: (any Error)?
     private(set) var isScanning = false
     private(set) var unreadPaneIDs: Set<Int> = []
+    var onSessionCompleted: ((Agent) -> Void)?
     private var previousStatusByPaneID: [Int: Agent.Status] = [:]
     private var timer: Timer?
 
@@ -42,7 +43,7 @@ final class AgentListViewModel {
             let previousStatus = previousStatusByPaneID[agent.paneID]
             if previousStatus == .running && agent.status == .idle && !agent.isActive {
                 unreadPaneIDs.insert(agent.paneID)
-                NotificationService.shared.sendCompletionNotification(for: agent)
+                onSessionCompleted?(agent)
             }
             if agent.isActive {
                 unreadPaneIDs.remove(agent.paneID)

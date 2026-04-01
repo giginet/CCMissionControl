@@ -4,6 +4,9 @@ import SwiftUI
 struct CCMissionControlApp: App {
     @State private var viewModel: AgentListViewModel = {
         let vm = AgentListViewModel()
+        vm.onSessionCompleted = { agent in
+            NotificationService.shared.sendCompletionNotification(for: agent)
+        }
         vm.startScanning()
         return vm
     }()
