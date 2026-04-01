@@ -6,6 +6,10 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		07C780CA2F7D6C3800C348DA /* AppIcon.icon in Resources */ = {isa = PBXBuildFile; fileRef = 07C780C92F7D6C3800C348DA /* AppIcon.icon */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		07C7804D2F7D4E7C00C348DA /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -27,6 +31,7 @@
 		07C7803F2F7D4E7B00C348DA /* CCMissionControl.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = CCMissionControl.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		07C7804C2F7D4E7C00C348DA /* CCMissionControlTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = CCMissionControlTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		07C780562F7D4E7C00C348DA /* CCMissionControlUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = CCMissionControlUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		07C780C92F7D6C3800C348DA /* AppIcon.icon */ = {isa = PBXFileReference; lastKnownFileType = folder.iconcomposer.icon; path = AppIcon.icon; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -79,6 +84,7 @@
 				07C7804F2F7D4E7C00C348DA /* CCMissionControlTests */,
 				07C780592F7D4E7C00C348DA /* CCMissionControlUITests */,
 				07C780402F7D4E7B00C348DA /* Products */,
+				07C780C92F7D6C3800C348DA /* AppIcon.icon */,
 			);
 			sourceTree = "<group>";
 		};
@@ -212,6 +218,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				07C780CA2F7D6C3800C348DA /* AppIcon.icon in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
