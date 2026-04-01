@@ -8,6 +8,7 @@ struct Agent: Identifiable, Hashable, Sendable {
     let cwd: String
     let title: String
     let status: Status
+    let isActive: Bool
 
     var id: Int { paneID }
 

@@ -7,6 +7,7 @@ struct WezTermPane: Decodable, Sendable {
     let title: String
     let cwd: String
     let ttyName: String
+    let isActive: Bool
 
     enum CodingKeys: String, CodingKey {
         case paneId = "pane_id"
@@ -15,5 +16,6 @@ struct WezTermPane: Decodable, Sendable {
         case title
         case cwd
         case ttyName = "tty_name"
+        case isActive = "is_active"
     }
 }

@@ -64,7 +64,8 @@ enum AgentScanner {
                 project: project,
                 cwd: displayCWD,
                 title: cleanTitle,
-                status: claudeStatus[cpid] ?? .idle
+                status: claudeStatus[cpid] ?? .idle,
+                isActive: pane.isActive
             ))
         }
 

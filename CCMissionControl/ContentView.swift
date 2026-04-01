@@ -5,6 +5,8 @@ final class AgentListViewModel {
     private(set) var agents: [Agent] = []
     private(set) var error: (any Error)?
     private(set) var isScanning = false
+    private(set) var unreadPaneIDs: Set<Int> = []
+    private var previousStatusByPaneID: [Int: Agent.Status] = [:]
     private var timer: Timer?
 
     func startScanning() {
@@ -19,12 +21,26 @@ final class AgentListViewModel {
         timer = nil
     }
 
+    func markAsRead(_ agent: Agent) {
+        unreadPaneIDs.remove(agent.paneID)
+    }
+
     func scanNow() {
         guard !isScanning else { return }
         isScanning = true
         Task {
             do {
                 let result = try await AgentScanner.scan()
+                for agent in result {
+                    let previous = previousStatusByPaneID[agent.paneID]
+                    if previous == .running && agent.status == .idle {
+                        unreadPaneIDs.insert(agent.paneID)
+                    }
+                    if agent.isActive {
+                        unreadPaneIDs.remove(agent.paneID)
+                    }
+                    previousStatusByPaneID[agent.paneID] = agent.status
+                }
                 self.agents = result
                 self.error = nil
             } catch {
@@ -54,13 +70,17 @@ struct ContentView: View {
                 )
             } else {
                 List(viewModel.agents) { agent in
-                    AgentRowView(agent: agent)
-                        .contentShape(Rectangle())
-                        .onTapGesture {
-                            Task {
-                                await AgentScanner.activateTab(for: agent)
-                            }
+                    AgentRowView(
+                        agent: agent,
+                        isUnread: viewModel.unreadPaneIDs.contains(agent.paneID)
+                    )
+                    .contentShape(Rectangle())
+                    .onTapGesture {
+                        viewModel.markAsRead(agent)
+                        Task {
+                            await AgentScanner.activateTab(for: agent)
                         }
+                    }
                 }
             }
         }

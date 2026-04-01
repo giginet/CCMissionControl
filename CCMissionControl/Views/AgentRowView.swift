@@ -2,6 +2,7 @@ import SwiftUI
 
 struct AgentRowView: View {
     let agent: Agent
+    var isUnread: Bool = false
 
     var body: some View {
         HStack(spacing: 12) {
@@ -10,6 +11,11 @@ struct AgentRowView: View {
                 HStack(alignment: .firstTextBaseline) {
                     Text(agent.project)
                         .font(.headline)
+                    if isUnread {
+                        Image(systemName: "bell.badge.fill")
+                            .foregroundStyle(.orange)
+                            .font(.caption)
+                    }
                     Text(agent.workspace)
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
