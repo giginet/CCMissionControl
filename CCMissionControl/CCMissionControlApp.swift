@@ -7,7 +7,10 @@ struct CCMissionControlApp: App {
         vm.startScanning()
         return vm
     }()
-    private let notificationService = NotificationService.shared
+
+    init() {
+        NotificationService.shared.requestAuthorization()
+    }
 
     var body: some Scene {
         MenuBarExtra {

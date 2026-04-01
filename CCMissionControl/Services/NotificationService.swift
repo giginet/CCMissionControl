@@ -6,9 +6,11 @@ final class NotificationService: NSObject, UNUserNotificationCenterDelegate, Sen
 
     private override init() {
         super.init()
-        let center = UNUserNotificationCenter.current()
-        center.delegate = self
-        center.requestAuthorization(options: [.alert, .sound]) { _, _ in }
+        UNUserNotificationCenter.current().delegate = self
+    }
+
+    func requestAuthorization() {
+        UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound, .badge]) { _, _ in }
     }
 
     func sendCompletionNotification(for agent: Agent) {
