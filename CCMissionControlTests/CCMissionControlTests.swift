@@ -5,8 +5,8 @@ import Foundation
 // MARK: - ProcessTree Parsing
 
 struct ProcessTreeParsingTests {
-    /// 実際の `ps -eo pid,ppid,tty,comm` 出力を再現したテスト。
-    /// TTYとCOMM間のダブルスペースでコマンド名に先頭スペースが混入するバグの再発防止。
+    /// Test with realistic `ps -eo pid,ppid,tty,comm` output.
+    /// Regression test for the bug where double spaces between TTY and COMM caused a leading space in command names.
     static let realisticPSOutput = """
       PID  PPID TTY      COMM
         1     0 ??       /sbin/launchd
@@ -28,8 +28,8 @@ struct ProcessTreeParsingTests {
 
     @Test func skipsHeaderLine() {
         let tree = ProcessTree(parsing: Self.realisticPSOutput)
-        // PID=1 (launchd) はTTY "??" なので entriesByTTY には入らないが、
-        // claudePIDs にも入らないことでヘッダー行がスキップされたことを間接確認
+        // PID=1 (launchd) has TTY "??" so it won't be in entriesByTTY.
+        // Verify the header line was skipped by confirming PID 0 is not in claudePIDs.
         #expect(!tree.claudePIDs.contains(0))
     }
 
@@ -99,7 +99,7 @@ struct AncestorDetectionTests {
 
     @Test func returnsNilForNonClaudeAncestry() {
         let tree = ProcessTree(parsing: Self.psOutput)
-        // zsh (15096) の親は login (15095)。claude の祖先ではない
+        // zsh (15096) has parent login (15095), not a descendant of claude
         let result = tree.ancestorClaude(of: 15096, claudePIDs: tree.claudePIDs)
         #expect(result == nil)
     }
@@ -111,7 +111,7 @@ struct AncestorDetectionTests {
     }
 
     @Test func handlesCircularParentChain() {
-        // ppid がループするような異常ケースでも無限ループしない
+        // Must not infinite-loop when ppid chain forms a cycle
         let output = """
           PID  PPID TTY      COMM
           100   200 ttys000  /bin/zsh
@@ -159,7 +159,7 @@ struct StatusDetectionTests {
           300   100 ttys000  caffeinate
         """
         let tree = ProcessTree(parsing: output)
-        // caffeinate (300) の親は 100 であり、claude (200) の子ではない
+        // caffeinate (300) has parent 100, not a child of claude (200)
         let children = tree.children(of: 200)
         let hasCaffeinate = children.contains { $0.commandName == "caffeinate" }
         #expect(!hasCaffeinate)
@@ -237,8 +237,8 @@ struct ProcessEntryTests {
 
 // MARK: - AgentListViewModel Unread Badge Logic
 //
-// isActive は focused_pane_id との一致で判定される。
-// ユーザーが実際にフォーカスしているペインのみ true になる。
+// isActive is determined by matching focused_pane_id from list-clients.
+// Only the pane the user is actually viewing is true.
 
 @MainActor
 struct UnreadBadgeTests {
@@ -259,29 +259,29 @@ struct UnreadBadgeTests {
         )
     }
 
-    // MARK: - フォーカス中のペインではバッジを出さない
+    // MARK: - No badge for focused pane
 
     @Test func noUnreadWhenFocusedPane_RunningToIdle() {
         let vm = AgentListViewModel()
 
-        // ユーザーがこのペインをフォーカスしたまま running→idle
+        // User keeps focus on this pane during running→idle
         vm.applyResult([makeAgent(status: .running, isActive: true)])
         vm.applyResult([makeAgent(status: .idle, isActive: true)])
         #expect(vm.unreadPaneIDs.isEmpty)
     }
 
-    // MARK: - フォーカスしていないペインではバッジを出す
+    // MARK: - Badge for unfocused pane
 
     @Test func unreadWhenUnfocusedPane_RunningToIdle() {
         let vm = AgentListViewModel()
 
-        // 別タブで動いているClaude Code（フォーカスなし）が running→idle
+        // Claude Code running in another tab (unfocused) transitions to idle
         vm.applyResult([makeAgent(status: .running, isActive: false)])
         vm.applyResult([makeAgent(status: .idle, isActive: false)])
         #expect(vm.unreadPaneIDs.contains(0))
     }
 
-    // MARK: - クリックで既読化
+    // MARK: - Mark as read on click
 
     @Test func markAsReadClearsBadge() {
         let vm = AgentListViewModel()
@@ -294,7 +294,7 @@ struct UnreadBadgeTests {
         #expect(vm.unreadPaneIDs.isEmpty)
     }
 
-    // MARK: - idle→idle ではバッジを出さない
+    // MARK: - No badge for idle→idle
 
     @Test func noUnreadWhenIdleToIdle() {
         let vm = AgentListViewModel()
@@ -304,28 +304,28 @@ struct UnreadBadgeTests {
         #expect(vm.unreadPaneIDs.isEmpty)
     }
 
-    // MARK: - 初回スキャンではバッジを出さない
+    // MARK: - No badge on first scan
 
     @Test func noUnreadOnFirstScan() {
         let vm = AgentListViewModel()
 
-        // previousStatus が nil → running→idle ではないので未読にならない
+        // previousStatus is nil → not a running→idle transition, so no unread
         vm.applyResult([makeAgent(status: .idle, isActive: false)])
         #expect(vm.unreadPaneIDs.isEmpty)
     }
 
-    // MARK: - 複数セッションの独立判定
+    // MARK: - Multiple sessions are independent
 
     @Test func multipleSessionsIndependent() {
         let vm = AgentListViewModel()
 
-        // pane 0: フォーカス中、pane 1: 別タブ（フォーカスなし）
+        // pane 0: focused, pane 1: another tab (unfocused)
         vm.applyResult([
             makeAgent(paneID: 0, status: .running, isActive: true),
             makeAgent(paneID: 1, status: .running, isActive: false),
         ])
 
-        // 両方 idle に → pane 0 はフォーカス中なので未読なし、pane 1 は未読
+        // Both go idle → pane 0 is focused so no unread, pane 1 is unread
         vm.applyResult([
             makeAgent(paneID: 0, status: .idle, isActive: true),
             makeAgent(paneID: 1, status: .idle, isActive: false),
@@ -334,15 +334,15 @@ struct UnreadBadgeTests {
         #expect(vm.unreadPaneIDs.contains(1))
     }
 
-    // MARK: - フォーカス移動のタイミング
+    // MARK: - Focus change timing
 
     @Test func focusedWhileRunning_UnfocusedWhenIdle_ShowsBadge() {
         let vm = AgentListViewModel()
 
-        // running 中はフォーカスしていた
+        // Focused while running
         vm.applyResult([makeAgent(status: .running, isActive: true)])
 
-        // idle 遷移時にフォーカスが別ペインに移動した → バッジ表示
+        // Focus moved to another pane when transitioning to idle → show badge
         vm.applyResult([makeAgent(status: .idle, isActive: false)])
         #expect(vm.unreadPaneIDs.contains(0))
     }
@@ -350,30 +350,30 @@ struct UnreadBadgeTests {
     @Test func unfocusedWhileRunning_FocusedWhenIdle_NoBadge() {
         let vm = AgentListViewModel()
 
-        // running 中はフォーカスしていなかった
+        // Unfocused while running
         vm.applyResult([makeAgent(status: .running, isActive: false)])
 
-        // idle 遷移時にちょうどフォーカスを戻した → バッジ表示しない
+        // User returned focus just as it went idle → no badge
         vm.applyResult([makeAgent(status: .idle, isActive: true)])
         #expect(vm.unreadPaneIDs.isEmpty)
     }
 
-    // MARK: - 未読のままフォーカスが戻った場合
+    // MARK: - Unread cleared when focus returns
 
     @Test func unreadClearedByFocusReturn() {
         let vm = AgentListViewModel()
 
-        // 未読状態を作る
+        // Create unread state
         vm.applyResult([makeAgent(status: .running, isActive: false)])
         vm.applyResult([makeAgent(status: .idle, isActive: false)])
         #expect(vm.unreadPaneIDs.contains(0))
 
-        // ユーザーがタブに戻った（フォーカスされた）→ 未読が消える
+        // User returns to the tab (focused) → unread is cleared
         vm.applyResult([makeAgent(status: .idle, isActive: true)])
         #expect(vm.unreadPaneIDs.isEmpty)
     }
 
-    // MARK: - running→running ではバッジを出さない
+    // MARK: - No badge for running→running
 
     @Test func noUnreadWhenRunningToRunning() {
         let vm = AgentListViewModel()
