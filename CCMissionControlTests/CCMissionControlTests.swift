@@ -234,3 +234,124 @@ struct ProcessEntryTests {
         #expect(entry.commandName == "sourcekit-lsp")
     }
 }
+
+// MARK: - AgentListViewModel Unread Badge Logic
+
+@MainActor
+struct UnreadBadgeTests {
+    private func makeAgent(
+        paneID: Int = 0,
+        status: Agent.Status,
+        isActive: Bool
+    ) -> Agent {
+        Agent(
+            paneID: paneID,
+            tabID: 0,
+            workspace: "default",
+            project: "TestProject",
+            cwd: "~/test",
+            title: "",
+            status: status,
+            isActive: isActive
+        )
+    }
+
+    @Test func noUnreadWhenActivePane_RunningToIdle() {
+        let vm = AgentListViewModel()
+
+        // running かつ active
+        vm.applyResult([makeAgent(status: .running, isActive: true)])
+        #expect(vm.unreadPaneIDs.isEmpty)
+
+        // idle に遷移、まだ active → ベルマーク表示しない
+        vm.applyResult([makeAgent(status: .idle, isActive: true)])
+        #expect(vm.unreadPaneIDs.isEmpty)
+    }
+
+    @Test func unreadWhenInactivePane_RunningToIdle() {
+        let vm = AgentListViewModel()
+
+        // running かつ inactive（別タブを見ている）
+        vm.applyResult([makeAgent(status: .running, isActive: false)])
+        #expect(vm.unreadPaneIDs.isEmpty)
+
+        // idle に遷移、まだ inactive → ベルマーク表示する
+        vm.applyResult([makeAgent(status: .idle, isActive: false)])
+        #expect(vm.unreadPaneIDs.contains(0))
+    }
+
+    @Test func markAsReadClearsBadge() {
+        let vm = AgentListViewModel()
+
+        // inactive で running→idle → 未読
+        vm.applyResult([makeAgent(status: .running, isActive: false)])
+        vm.applyResult([makeAgent(status: .idle, isActive: false)])
+        #expect(vm.unreadPaneIDs.contains(0))
+
+        // クリックで既読化
+        vm.markAsRead(makeAgent(status: .idle, isActive: false))
+        #expect(vm.unreadPaneIDs.isEmpty)
+    }
+
+    @Test func noUnreadWhenIdleToIdle() {
+        let vm = AgentListViewModel()
+
+        // 最初から idle
+        vm.applyResult([makeAgent(status: .idle, isActive: false)])
+        #expect(vm.unreadPaneIDs.isEmpty)
+
+        // idle のまま → ベルマーク表示しない
+        vm.applyResult([makeAgent(status: .idle, isActive: false)])
+        #expect(vm.unreadPaneIDs.isEmpty)
+    }
+
+    @Test func noUnreadOnFirstScan() {
+        let vm = AgentListViewModel()
+
+        // 初回スキャンで idle → previousStatus が nil なので未読にならない
+        vm.applyResult([makeAgent(status: .idle, isActive: false)])
+        #expect(vm.unreadPaneIDs.isEmpty)
+    }
+
+    @Test func multipleSessionsIndependent() {
+        let vm = AgentListViewModel()
+
+        // 2セッション、両方 running
+        vm.applyResult([
+            makeAgent(paneID: 0, status: .running, isActive: true),
+            makeAgent(paneID: 1, status: .running, isActive: false),
+        ])
+        #expect(vm.unreadPaneIDs.isEmpty)
+
+        // pane 0: active のまま idle → 未読にならない
+        // pane 1: inactive のまま idle → 未読になる
+        vm.applyResult([
+            makeAgent(paneID: 0, status: .idle, isActive: true),
+            makeAgent(paneID: 1, status: .idle, isActive: false),
+        ])
+        #expect(!vm.unreadPaneIDs.contains(0))
+        #expect(vm.unreadPaneIDs.contains(1))
+    }
+
+    @Test func activeWhileRunning_InactiveWhenIdle_ShowsBadge() {
+        let vm = AgentListViewModel()
+
+        // running 中は active（ユーザーが見ている）
+        vm.applyResult([makeAgent(status: .running, isActive: true)])
+
+        // idle 遷移時に inactive（ユーザーが別タブに移動した）→ ベルマーク表示
+        vm.applyResult([makeAgent(status: .idle, isActive: false)])
+        #expect(vm.unreadPaneIDs.contains(0))
+    }
+
+    @Test func inactiveWhileRunning_ActiveWhenIdle_NoBadge() {
+        let vm = AgentListViewModel()
+
+        // running 中は inactive
+        vm.applyResult([makeAgent(status: .running, isActive: false)])
+
+        // idle 遷移時に active（ユーザーがちょうど戻ってきた）→ ベルマーク表示しない
+        vm.applyResult([makeAgent(status: .idle, isActive: true)])
+        #expect(vm.unreadPaneIDs.isEmpty)
+    }
+}

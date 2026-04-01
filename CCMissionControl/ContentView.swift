@@ -27,20 +27,24 @@ final class AgentListViewModel {
         Task {
             do {
                 let result = try await AgentScanner.scan()
-                for agent in result {
-                    let previousStatus = previousStatusByPaneID[agent.paneID]
-                    if previousStatus == .running && agent.status == .idle && !agent.isActive {
-                        unreadPaneIDs.insert(agent.paneID)
-                    }
-                    previousStatusByPaneID[agent.paneID] = agent.status
-                }
-                self.agents = result
-                self.error = nil
+                applyResult(result)
             } catch {
                 self.error = error
             }
             self.isScanning = false
         }
+    }
+
+    func applyResult(_ result: [Agent]) {
+        for agent in result {
+            let previousStatus = previousStatusByPaneID[agent.paneID]
+            if previousStatus == .running && agent.status == .idle && !agent.isActive {
+                unreadPaneIDs.insert(agent.paneID)
+            }
+            previousStatusByPaneID[agent.paneID] = agent.status
+        }
+        self.agents = result
+        self.error = nil
     }
 }
 
