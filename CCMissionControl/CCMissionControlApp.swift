@@ -13,5 +13,6 @@ struct CCMissionControlApp: App {
         WindowGroup {
             ContentView()
         }
+        .defaultSize(width: 500, height: 400)
     }
 }
