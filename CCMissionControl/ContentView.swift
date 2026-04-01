@@ -40,6 +40,7 @@ final class AgentListViewModel {
             let previousStatus = previousStatusByPaneID[agent.paneID]
             if previousStatus == .running && agent.status == .idle && !agent.isActive {
                 unreadPaneIDs.insert(agent.paneID)
+                NotificationService.shared.sendCompletionNotification(for: agent)
             }
             if agent.isActive {
                 unreadPaneIDs.remove(agent.paneID)

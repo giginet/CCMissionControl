@@ -2,7 +2,12 @@ import SwiftUI
 
 @main
 struct CCMissionControlApp: App {
-    @State private var viewModel = AgentListViewModel()
+    @State private var viewModel: AgentListViewModel = {
+        let vm = AgentListViewModel()
+        vm.startScanning()
+        return vm
+    }()
+    private let notificationService = NotificationService.shared
 
     var body: some Scene {
         MenuBarExtra {
