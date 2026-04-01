@@ -9,6 +9,7 @@ struct CCMissionControlApp: App {
     }()
 
     init() {
+        NotificationService.shared.setUp()
         NotificationService.shared.requestAuthorization()
     }
 

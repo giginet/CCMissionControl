@@ -6,6 +6,9 @@ final class NotificationService: NSObject, UNUserNotificationCenterDelegate, Sen
 
     private override init() {
         super.init()
+    }
+
+    func setUp() {
         UNUserNotificationCenter.current().delegate = self
     }
 
@@ -13,27 +16,36 @@ final class NotificationService: NSObject, UNUserNotificationCenterDelegate, Sen
         UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound, .badge]) { _, _ in }
     }
 
+    func getAuthorizationStatus() async -> UNAuthorizationStatus {
+        await UNUserNotificationCenter.current().notificationSettings().authorizationStatus
+    }
+
     func sendCompletionNotification(for agent: Agent) {
         let content = UNMutableNotificationContent()
-        content.title = "Claude Code completed"
-        content.body = "\(agent.project) (\(agent.workspace))"
+        content.title = "\(agent.project) completed"
+        content.subtitle = agent.cwd
+        content.body = agent.title
         content.sound = .default
         content.userInfo = ["tabID": agent.tabID]
 
         let request = UNNotificationRequest(
-            identifier: "agent-\(agent.paneID)",
+            identifier: "agent-\(agent.paneID)-\(UUID().uuidString)",
             content: content,
             trigger: nil
         )
         UNUserNotificationCenter.current().add(request)
     }
 
-    nonisolated func userNotificationCenter(
+    func userNotificationCenter(
         _ center: UNUserNotificationCenter,
-        didReceive response: UNNotificationResponse
-    ) async {
+        didReceive response: UNNotificationResponse,
+        withCompletionHandler completionHandler: @escaping () -> Void
+    ) {
         let userInfo = response.notification.request.content.userInfo
-        guard let tabID = userInfo["tabID"] as? Int else { return }
+        guard let tabID = userInfo["tabID"] as? Int else {
+            completionHandler()
+            return
+        }
 
         let agent = Agent(
             paneID: -1,
@@ -45,13 +57,17 @@ final class NotificationService: NSObject, UNUserNotificationCenterDelegate, Sen
             status: .idle,
             isActive: false
         )
-        await AgentScanner.activateTab(for: agent)
+        Task {
+            await AgentScanner.activateTab(for: agent)
+            completionHandler()
+        }
     }
 
-    nonisolated func userNotificationCenter(
+    func userNotificationCenter(
         _ center: UNUserNotificationCenter,
-        willPresent notification: UNNotification
-    ) async -> UNNotificationPresentationOptions {
-        [.banner, .sound]
+        willPresent notification: UNNotification,
+        withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void
+    ) {
+        completionHandler([.banner, .sound, .list])
     }
 }

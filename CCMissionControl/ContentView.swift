@@ -1,4 +1,6 @@
+import AppKit
 import SwiftUI
+import UserNotifications
 
 @Observable
 final class AgentListViewModel {
@@ -85,6 +87,9 @@ struct ContentView: View {
                 }
             }
         }
+        .safeAreaInset(edge: .bottom) {
+            FooterView()
+        }
         .toolbar {
             ToolbarItem {
                 Button {
@@ -96,6 +101,64 @@ struct ContentView: View {
             }
         }
         .onAppear { viewModel.startScanning() }
+    }
+}
+
+struct FooterView: View {
+    @State private var notificationStatus: UNAuthorizationStatus = .notDetermined
+
+    var body: some View {
+        HStack {
+            HStack(spacing: 4) {
+                Image(systemName: notificationStatusIcon)
+                    .foregroundStyle(notificationStatusColor)
+                Text("Notifications: \(notificationStatusText)")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+            .onTapGesture {
+                if let url = URL(string: "x-apple.systempreferences:com.apple.Notifications-Settings.extension") {
+                    NSWorkspace.shared.open(url)
+                }
+            }
+            Spacer()
+            Button("Quit") {
+                NSApplication.shared.terminate(nil)
+            }
+            .buttonStyle(.plain)
+            .font(.caption)
+            .foregroundStyle(.secondary)
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 8)
+        .task {
+            notificationStatus = await NotificationService.shared.getAuthorizationStatus()
+        }
+    }
+
+    private var notificationStatusIcon: String {
+        switch notificationStatus {
+        case .authorized: "bell.fill"
+        case .denied: "bell.slash.fill"
+        default: "bell"
+        }
+    }
+
+    private var notificationStatusColor: Color {
+        switch notificationStatus {
+        case .authorized: .green
+        case .denied: .red
+        default: .secondary
+        }
+    }
+
+    private var notificationStatusText: String {
+        switch notificationStatus {
+        case .authorized: "On"
+        case .denied: "Off"
+        case .provisional: "Provisional"
+        default: "Not Set"
+        }
     }
 }
 
