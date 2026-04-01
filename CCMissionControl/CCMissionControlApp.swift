@@ -1,18 +1,36 @@
-//
-//  CCMissionControlApp.swift
-//  CCMissionControl
-//
-//  Created by giginet on 2026/04/01.
-//
-
 import SwiftUI
 
 @main
 struct CCMissionControlApp: App {
+    @State private var viewModel = AgentListViewModel()
+
     var body: some Scene {
-        WindowGroup {
-            ContentView()
+        MenuBarExtra {
+            ContentView(viewModel: viewModel)
+                .frame(width: 480, height: 350)
+        } label: {
+            MenuBarLabel(viewModel: viewModel)
         }
-        .defaultSize(width: 500, height: 400)
+        .menuBarExtraStyle(.window)
+    }
+}
+
+struct MenuBarLabel: View {
+    let viewModel: AgentListViewModel
+
+    var body: some View {
+        let runningCount = viewModel.agents.filter { $0.status == .running }.count
+        let totalCount = viewModel.agents.count
+        let hasUnread = !viewModel.unreadPaneIDs.isEmpty
+
+        HStack(alignment: .center, spacing: 4) {
+            if hasUnread {
+                Image(systemName: "bell.badge.fill")
+            }
+            Image(systemName: runningCount > 0 ? "bolt.fill" : "powersleep")
+                .imageScale(.small)
+            Text("\(totalCount)")
+                .monospacedDigit()
+        }
     }
 }

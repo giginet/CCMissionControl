@@ -7,19 +7,14 @@ final class AgentListViewModel {
     private(set) var isScanning = false
     private(set) var unreadPaneIDs: Set<Int> = []
     private var previousStatusByPaneID: [Int: Agent.Status] = [:]
-    private var previousActiveByPaneID: [Int: Bool] = [:]
     private var timer: Timer?
 
     func startScanning() {
+        guard timer == nil else { return }
         scanNow()
         timer = Timer.scheduledTimer(withTimeInterval: 2, repeats: true) { [weak self] _ in
             self?.scanNow()
         }
-    }
-
-    func stopScanning() {
-        timer?.invalidate()
-        timer = nil
     }
 
     func markAsRead(_ agent: Agent) {
@@ -34,15 +29,10 @@ final class AgentListViewModel {
                 let result = try await AgentScanner.scan()
                 for agent in result {
                     let previousStatus = previousStatusByPaneID[agent.paneID]
-                    let wasActive = previousActiveByPaneID[agent.paneID] ?? false
-                    if previousStatus == .running && agent.status == .idle && !(wasActive && agent.isActive) {
+                    if previousStatus == .running && agent.status == .idle && !agent.isActive {
                         unreadPaneIDs.insert(agent.paneID)
                     }
-                    if !wasActive && agent.isActive {
-                        unreadPaneIDs.remove(agent.paneID)
-                    }
                     previousStatusByPaneID[agent.paneID] = agent.status
-                    previousActiveByPaneID[agent.paneID] = agent.isActive
                 }
                 self.agents = result
                 self.error = nil
@@ -55,7 +45,7 @@ final class AgentListViewModel {
 }
 
 struct ContentView: View {
-    @State private var viewModel = AgentListViewModel()
+    let viewModel: AgentListViewModel
 
     var body: some View {
         Group {
@@ -97,12 +87,10 @@ struct ContentView: View {
                 .disabled(viewModel.isScanning)
             }
         }
-        .frame(minWidth: 400, minHeight: 300)
         .onAppear { viewModel.startScanning() }
-        .onDisappear { viewModel.stopScanning() }
     }
 }
 
 #Preview {
-    ContentView()
+    ContentView(viewModel: AgentListViewModel())
 }
