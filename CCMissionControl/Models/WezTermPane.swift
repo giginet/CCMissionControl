@@ -19,3 +19,11 @@ struct WezTermPane: Decodable, Sendable {
         case isActive = "is_active"
     }
 }
+
+struct WezTermClient: Decodable, Sendable {
+    let focusedPaneId: Int
+
+    enum CodingKeys: String, CodingKey {
+        case focusedPaneId = "focused_pane_id"
+    }
+}

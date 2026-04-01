@@ -236,6 +236,9 @@ struct ProcessEntryTests {
 }
 
 // MARK: - AgentListViewModel Unread Badge Logic
+//
+// isActive は focused_pane_id との一致で判定される。
+// ユーザーが実際にフォーカスしているペインのみ true になる。
 
 @MainActor
 struct UnreadBadgeTests {
@@ -256,75 +259,73 @@ struct UnreadBadgeTests {
         )
     }
 
-    @Test func noUnreadWhenActivePane_RunningToIdle() {
+    // MARK: - フォーカス中のペインではバッジを出さない
+
+    @Test func noUnreadWhenFocusedPane_RunningToIdle() {
         let vm = AgentListViewModel()
 
-        // running かつ active
+        // ユーザーがこのペインをフォーカスしたまま running→idle
         vm.applyResult([makeAgent(status: .running, isActive: true)])
-        #expect(vm.unreadPaneIDs.isEmpty)
-
-        // idle に遷移、まだ active → ベルマーク表示しない
         vm.applyResult([makeAgent(status: .idle, isActive: true)])
         #expect(vm.unreadPaneIDs.isEmpty)
     }
 
-    @Test func unreadWhenInactivePane_RunningToIdle() {
+    // MARK: - フォーカスしていないペインではバッジを出す
+
+    @Test func unreadWhenUnfocusedPane_RunningToIdle() {
         let vm = AgentListViewModel()
 
-        // running かつ inactive（別タブを見ている）
+        // 別タブで動いているClaude Code（フォーカスなし）が running→idle
         vm.applyResult([makeAgent(status: .running, isActive: false)])
-        #expect(vm.unreadPaneIDs.isEmpty)
-
-        // idle に遷移、まだ inactive → ベルマーク表示する
         vm.applyResult([makeAgent(status: .idle, isActive: false)])
         #expect(vm.unreadPaneIDs.contains(0))
     }
+
+    // MARK: - クリックで既読化
 
     @Test func markAsReadClearsBadge() {
         let vm = AgentListViewModel()
 
-        // inactive で running→idle → 未読
         vm.applyResult([makeAgent(status: .running, isActive: false)])
         vm.applyResult([makeAgent(status: .idle, isActive: false)])
         #expect(vm.unreadPaneIDs.contains(0))
 
-        // クリックで既読化
         vm.markAsRead(makeAgent(status: .idle, isActive: false))
         #expect(vm.unreadPaneIDs.isEmpty)
     }
 
+    // MARK: - idle→idle ではバッジを出さない
+
     @Test func noUnreadWhenIdleToIdle() {
         let vm = AgentListViewModel()
 
-        // 最初から idle
         vm.applyResult([makeAgent(status: .idle, isActive: false)])
-        #expect(vm.unreadPaneIDs.isEmpty)
-
-        // idle のまま → ベルマーク表示しない
         vm.applyResult([makeAgent(status: .idle, isActive: false)])
         #expect(vm.unreadPaneIDs.isEmpty)
     }
+
+    // MARK: - 初回スキャンではバッジを出さない
 
     @Test func noUnreadOnFirstScan() {
         let vm = AgentListViewModel()
 
-        // 初回スキャンで idle → previousStatus が nil なので未読にならない
+        // previousStatus が nil → running→idle ではないので未読にならない
         vm.applyResult([makeAgent(status: .idle, isActive: false)])
         #expect(vm.unreadPaneIDs.isEmpty)
     }
 
+    // MARK: - 複数セッションの独立判定
+
     @Test func multipleSessionsIndependent() {
         let vm = AgentListViewModel()
 
-        // 2セッション、両方 running
+        // pane 0: フォーカス中、pane 1: 別タブ（フォーカスなし）
         vm.applyResult([
             makeAgent(paneID: 0, status: .running, isActive: true),
             makeAgent(paneID: 1, status: .running, isActive: false),
         ])
-        #expect(vm.unreadPaneIDs.isEmpty)
 
-        // pane 0: active のまま idle → 未読にならない
-        // pane 1: inactive のまま idle → 未読になる
+        // 両方 idle に → pane 0 はフォーカス中なので未読なし、pane 1 は未読
         vm.applyResult([
             makeAgent(paneID: 0, status: .idle, isActive: true),
             makeAgent(paneID: 1, status: .idle, isActive: false),
@@ -333,25 +334,56 @@ struct UnreadBadgeTests {
         #expect(vm.unreadPaneIDs.contains(1))
     }
 
-    @Test func activeWhileRunning_InactiveWhenIdle_ShowsBadge() {
+    // MARK: - フォーカス移動のタイミング
+
+    @Test func focusedWhileRunning_UnfocusedWhenIdle_ShowsBadge() {
         let vm = AgentListViewModel()
 
-        // running 中は active（ユーザーが見ている）
+        // running 中はフォーカスしていた
         vm.applyResult([makeAgent(status: .running, isActive: true)])
 
-        // idle 遷移時に inactive（ユーザーが別タブに移動した）→ ベルマーク表示
+        // idle 遷移時にフォーカスが別ペインに移動した → バッジ表示
         vm.applyResult([makeAgent(status: .idle, isActive: false)])
         #expect(vm.unreadPaneIDs.contains(0))
     }
 
-    @Test func inactiveWhileRunning_ActiveWhenIdle_NoBadge() {
+    @Test func unfocusedWhileRunning_FocusedWhenIdle_NoBadge() {
         let vm = AgentListViewModel()
 
-        // running 中は inactive
+        // running 中はフォーカスしていなかった
         vm.applyResult([makeAgent(status: .running, isActive: false)])
 
-        // idle 遷移時に active（ユーザーがちょうど戻ってきた）→ ベルマーク表示しない
+        // idle 遷移時にちょうどフォーカスを戻した → バッジ表示しない
         vm.applyResult([makeAgent(status: .idle, isActive: true)])
+        #expect(vm.unreadPaneIDs.isEmpty)
+    }
+
+    // MARK: - 未読のままフォーカスが戻った場合
+
+    @Test func unreadClearedByMarkAsRead_NotByFocusAlone() {
+        let vm = AgentListViewModel()
+
+        // 未読状態を作る
+        vm.applyResult([makeAgent(status: .running, isActive: false)])
+        vm.applyResult([makeAgent(status: .idle, isActive: false)])
+        #expect(vm.unreadPaneIDs.contains(0))
+
+        // フォーカスが戻っても applyResult だけでは未読は消えない
+        vm.applyResult([makeAgent(status: .idle, isActive: true)])
+        #expect(vm.unreadPaneIDs.contains(0))
+
+        // クリック（markAsRead）で消える
+        vm.markAsRead(makeAgent(status: .idle, isActive: true))
+        #expect(vm.unreadPaneIDs.isEmpty)
+    }
+
+    // MARK: - running→running ではバッジを出さない
+
+    @Test func noUnreadWhenRunningToRunning() {
+        let vm = AgentListViewModel()
+
+        vm.applyResult([makeAgent(status: .running, isActive: false)])
+        vm.applyResult([makeAgent(status: .running, isActive: false)])
         #expect(vm.unreadPaneIDs.isEmpty)
     }
 }

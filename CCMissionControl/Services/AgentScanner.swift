@@ -19,9 +19,11 @@ enum AgentScanner {
     nonisolated static func scan() async throws -> [Agent] {
         async let panesResult = fetchPanes()
         async let processResult = fetchProcessTree()
+        async let focusedResult = fetchFocusedPaneID()
 
         let panes = try await panesResult
         let tree = try await processResult
+        let focusedPaneID = try await focusedResult
 
         let claudePIDs = tree.claudePIDs
         var claudeStatus: [Int: Agent.Status] = [:]
@@ -65,7 +67,7 @@ enum AgentScanner {
                 cwd: displayCWD,
                 title: cleanTitle,
                 status: claudeStatus[cpid] ?? .idle,
-                isActive: pane.isActive
+                isActive: pane.paneId == focusedPaneID
             ))
         }
 
@@ -115,6 +117,21 @@ enum AgentScanner {
             return try JSONDecoder().decode([WezTermPane].self, from: data)
         } catch is ShellExecutor.ShellError {
             throw ScanError.wezTermNotFound
+        }
+    }
+
+    private nonisolated static func fetchFocusedPaneID() async throws -> Int? {
+        guard let wezterm = findWezTerm() else { return nil }
+        do {
+            let output = try await ShellExecutor.run(
+                executablePath: wezterm,
+                arguments: ["cli", "list-clients", "--format", "json"]
+            )
+            let data = Data(output.utf8)
+            let clients = try JSONDecoder().decode([WezTermClient].self, from: data)
+            return clients.first?.focusedPaneId
+        } catch {
+            return nil
         }
     }
 
