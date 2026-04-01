@@ -41,6 +41,9 @@ final class AgentListViewModel {
             if previousStatus == .running && agent.status == .idle && !agent.isActive {
                 unreadPaneIDs.insert(agent.paneID)
             }
+            if agent.isActive {
+                unreadPaneIDs.remove(agent.paneID)
+            }
             previousStatusByPaneID[agent.paneID] = agent.status
         }
         self.agents = result

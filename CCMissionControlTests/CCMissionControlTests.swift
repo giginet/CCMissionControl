@@ -360,7 +360,7 @@ struct UnreadBadgeTests {
 
     // MARK: - 未読のままフォーカスが戻った場合
 
-    @Test func unreadClearedByMarkAsRead_NotByFocusAlone() {
+    @Test func unreadClearedByFocusReturn() {
         let vm = AgentListViewModel()
 
         // 未読状態を作る
@@ -368,12 +368,8 @@ struct UnreadBadgeTests {
         vm.applyResult([makeAgent(status: .idle, isActive: false)])
         #expect(vm.unreadPaneIDs.contains(0))
 
-        // フォーカスが戻っても applyResult だけでは未読は消えない
+        // ユーザーがタブに戻った（フォーカスされた）→ 未読が消える
         vm.applyResult([makeAgent(status: .idle, isActive: true)])
-        #expect(vm.unreadPaneIDs.contains(0))
-
-        // クリック（markAsRead）で消える
-        vm.markAsRead(makeAgent(status: .idle, isActive: true))
         #expect(vm.unreadPaneIDs.isEmpty)
     }
 
