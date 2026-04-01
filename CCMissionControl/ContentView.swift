@@ -7,6 +7,7 @@ final class AgentListViewModel {
     private(set) var isScanning = false
     private(set) var unreadPaneIDs: Set<Int> = []
     private var previousStatusByPaneID: [Int: Agent.Status] = [:]
+    private var previousActiveByPaneID: [Int: Bool] = [:]
     private var timer: Timer?
 
     func startScanning() {
@@ -32,14 +33,16 @@ final class AgentListViewModel {
             do {
                 let result = try await AgentScanner.scan()
                 for agent in result {
-                    let previous = previousStatusByPaneID[agent.paneID]
-                    if previous == .running && agent.status == .idle {
+                    let previousStatus = previousStatusByPaneID[agent.paneID]
+                    let wasActive = previousActiveByPaneID[agent.paneID] ?? false
+                    if previousStatus == .running && agent.status == .idle && !(wasActive && agent.isActive) {
                         unreadPaneIDs.insert(agent.paneID)
                     }
-                    if agent.isActive {
+                    if !wasActive && agent.isActive {
                         unreadPaneIDs.remove(agent.paneID)
                     }
                     previousStatusByPaneID[agent.paneID] = agent.status
+                    previousActiveByPaneID[agent.paneID] = agent.isActive
                 }
                 self.agents = result
                 self.error = nil
