@@ -2,6 +2,7 @@ import Foundation
 
 struct Agent: Identifiable, Hashable, Sendable {
     let paneID: Int
+    let tabID: Int
     let workspace: String
     let project: String
     let cwd: String

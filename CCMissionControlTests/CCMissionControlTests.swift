@@ -206,8 +206,8 @@ struct WezTermPaneDecodingTests {
     @Test func decodesMultiplePanes() throws {
         let json = """
         [
-          { "pane_id": 0, "workspace": "default", "title": "zsh", "cwd": "file:///tmp", "tty_name": "/dev/ttys000" },
-          { "pane_id": 1, "workspace": "work", "title": "vim", "cwd": "file:///home", "tty_name": "/dev/ttys001" }
+          { "pane_id": 0, "tab_id": 0, "workspace": "default", "title": "zsh", "cwd": "file:///tmp", "tty_name": "/dev/ttys000" },
+          { "pane_id": 1, "tab_id": 1, "workspace": "work", "title": "vim", "cwd": "file:///home", "tty_name": "/dev/ttys001" }
         ]
         """
         let panes = try JSONDecoder().decode([WezTermPane].self, from: Data(json.utf8))

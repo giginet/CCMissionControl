@@ -55,6 +55,12 @@ struct ContentView: View {
             } else {
                 List(viewModel.agents) { agent in
                     AgentRowView(agent: agent)
+                        .contentShape(Rectangle())
+                        .onTapGesture {
+                            Task {
+                                await AgentScanner.activateTab(for: agent)
+                            }
+                        }
                 }
             }
         }

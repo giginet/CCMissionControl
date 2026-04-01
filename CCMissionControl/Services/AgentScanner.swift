@@ -1,3 +1,4 @@
+import AppKit
 import Foundation
 
 enum ScanError: LocalizedError {
@@ -58,6 +59,7 @@ enum AgentScanner {
 
             agents.append(Agent(
                 paneID: pane.paneId,
+                tabID: pane.tabId,
                 workspace: pane.workspace,
                 project: project,
                 cwd: displayCWD,
@@ -74,6 +76,17 @@ enum AgentScanner {
         }
 
         return agents
+    }
+
+    nonisolated static func activateTab(for agent: Agent) async {
+        guard let wezterm = findWezTerm() else { return }
+        _ = try? await ShellExecutor.run(
+            executablePath: wezterm,
+            arguments: ["cli", "activate-tab", "--tab-id", String(agent.tabID)]
+        )
+        await NSWorkspace.shared.open(
+            URL(filePath: "/Applications/WezTerm.app")
+        )
     }
 
     // MARK: - Private
