@@ -101,7 +101,11 @@ enum AgentScanner {
     ]
 
     private nonisolated static func findWezTerm() -> String? {
-        wezTermPaths.first { FileManager.default.isExecutableFile(atPath: $0) }
+        let customPath = UserDefaults.standard.string(forKey: "wezTermPath") ?? ""
+        if !customPath.isEmpty && FileManager.default.isExecutableFile(atPath: customPath) {
+            return customPath
+        }
+        return wezTermPaths.first { FileManager.default.isExecutableFile(atPath: $0) }
     }
 
     private nonisolated static func fetchPanes() async throws -> [WezTermPane] {

@@ -1,6 +1,4 @@
-import AppKit
 import SwiftUI
-import UserNotifications
 
 @Observable
 final class AgentListViewModel {
@@ -42,12 +40,18 @@ final class AgentListViewModel {
         }
     }
 
+    var notificationsEnabled: Bool {
+        UserDefaults.standard.object(forKey: "notificationsEnabled") as? Bool ?? true
+    }
+
     func applyResult(_ result: [Agent]) {
         for agent in result {
             let previousStatus = previousStatusByPaneID[agent.paneID]
             if previousStatus == .running && agent.status == .idle && !agent.isActive {
                 unreadPaneIDs.insert(agent.paneID)
-                notificationService.sendCompletionNotification(for: agent)
+                if notificationsEnabled {
+                    notificationService.sendCompletionNotification(for: agent)
+                }
             }
             if agent.isActive {
                 unreadPaneIDs.remove(agent.paneID)
@@ -110,25 +114,23 @@ struct ContentView: View {
 }
 
 struct FooterView: View {
-    @State private var notificationStatus: UNAuthorizationStatus = .notDetermined
+    @Environment(\.openSettings) private var openSettings
 
     var body: some View {
         HStack {
-            HStack(spacing: 4) {
-                Image(systemName: notificationStatusIcon)
-                    .foregroundStyle(notificationStatusColor)
-                Text("Notifications: \(notificationStatusText)")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+            Button {
+                openSettings()
+            } label: {
+                Label("Settings", systemImage: "gear")
             }
-            .onTapGesture {
-                if let url = URL(string: "x-apple.systempreferences:com.apple.Notifications-Settings.extension") {
-                    NSWorkspace.shared.open(url)
-                }
-            }
+            .buttonStyle(.plain)
+            .font(.caption)
+            .foregroundStyle(.secondary)
             Spacer()
-            Button("Quit") {
+            Button {
                 NSApplication.shared.terminate(nil)
+            } label: {
+                Label("Quit", systemImage: "power")
             }
             .buttonStyle(.plain)
             .font(.caption)
@@ -136,34 +138,6 @@ struct FooterView: View {
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 8)
-        .task {
-            notificationStatus = await SystemNotificationService.shared.getAuthorizationStatus()
-        }
-    }
-
-    private var notificationStatusIcon: String {
-        switch notificationStatus {
-        case .authorized: "bell.fill"
-        case .denied: "bell.slash.fill"
-        default: "bell"
-        }
-    }
-
-    private var notificationStatusColor: Color {
-        switch notificationStatus {
-        case .authorized: .green
-        case .denied: .red
-        default: .secondary
-        }
-    }
-
-    private var notificationStatusText: String {
-        switch notificationStatus {
-        case .authorized: "On"
-        case .denied: "Off"
-        case .provisional: "Provisional"
-        default: "Not Set"
-        }
     }
 }
 

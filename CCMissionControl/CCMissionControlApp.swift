@@ -21,6 +21,10 @@ struct CCMissionControlApp: App {
             MenuBarLabel(viewModel: viewModel)
         }
         .menuBarExtraStyle(.window)
+
+        Settings {
+            SettingsView()
+        }
     }
 }
 
