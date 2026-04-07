@@ -62,9 +62,11 @@ final class AgentListViewModel {
     }
 
     func applyResult(_ result: [Agent]) {
-        for var agent in result {
+        var updatedAgents: [Agent] = []
+        for agent in result {
+            let effectiveAgent: Agent
             if let overrideID = overriddenActivePaneID {
-                agent = Agent(
+                effectiveAgent = Agent(
                     paneID: agent.paneID,
                     tabID: agent.tabID,
                     workspace: agent.workspace,
@@ -74,20 +76,23 @@ final class AgentListViewModel {
                     status: agent.status,
                     isActive: agent.paneID == overrideID
                 )
+            } else {
+                effectiveAgent = agent
             }
-            let previousStatus = previousStatusByPaneID[agent.paneID]
-            if previousStatus == .running && agent.status == .idle && !agent.isActive {
-                unreadPaneIDs.insert(agent.paneID)
+            let previousStatus = previousStatusByPaneID[effectiveAgent.paneID]
+            if previousStatus == .running && effectiveAgent.status == .idle && !effectiveAgent.isActive {
+                unreadPaneIDs.insert(effectiveAgent.paneID)
                 if notificationsEnabled {
-                    notificationService.sendCompletionNotification(for: agent)
+                    notificationService.sendCompletionNotification(for: effectiveAgent)
                 }
             }
-            if agent.isActive {
-                unreadPaneIDs.remove(agent.paneID)
+            if effectiveAgent.isActive {
+                unreadPaneIDs.remove(effectiveAgent.paneID)
             }
-            previousStatusByPaneID[agent.paneID] = agent.status
+            previousStatusByPaneID[effectiveAgent.paneID] = effectiveAgent.status
+            updatedAgents.append(effectiveAgent)
         }
-        self.agents = result
+        self.agents = updatedAgents
         self.error = nil
     }
 }
