@@ -1,20 +1,48 @@
 {
   "fill" : {
-    "solid" : "extended-srgb:1.00000,0.55294,0.15686,1.00000"
+    "solid" : "display-p3:0.80452,0.50077,0.38681,1.00000"
   },
   "groups" : [
     {
+      "blur-material" : null,
       "layers" : [
         {
-          "fill" : {
-            "linear-gradient" : [
-              "extended-srgb:0.38039,0.33333,0.96078,1.00000",
-              "extended-srgb:0.00000,0.75294,0.90980,1.00000"
-            ]
-          },
+          "blend-mode-specializations" : [
+            {
+              "appearance" : "light",
+              "idiom" : "macOS",
+              "value" : "normal"
+            }
+          ],
+          "fill-specializations" : [
+            {
+              "value" : {
+                "linear-gradient" : [
+                  "extended-srgb:0.00000,0.76471,0.81569,1.00000",
+                  "extended-gray:1.00000,1.00000"
+                ]
+              }
+            },
+            {
+              "appearance" : "dark",
+              "value" : {
+                "linear-gradient" : [
+                  "display-p3:0.79976,0.48597,0.36857,1.00000",
+                  "extended-srgb:0.00000,0.76471,0.81569,1.00000"
+                ]
+              }
+            }
+          ],
           "glass" : true,
           "image-name" : "bolt.fill.svg",
           "name" : "bolt.fill",
+          "opacity-specializations" : [
+            {
+              "appearance" : "light",
+              "idiom" : "macOS",
+              "value" : 1
+            }
+          ],
           "position" : {
             "scale" : 8,
             "translation-in-points" : [
@@ -24,6 +52,7 @@
           }
         }
       ],
+      "lighting" : "combined",
       "shadow" : {
         "kind" : "neutral",
         "opacity" : 0.5
@@ -35,9 +64,8 @@
     }
   ],
   "supported-platforms" : {
-    "circles" : [
-      "watchOS"
-    ],
-    "squares" : "shared"
+    "squares" : [
+      "macOS"
+    ]
   }
 }
