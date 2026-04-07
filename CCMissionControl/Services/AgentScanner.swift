@@ -87,9 +87,10 @@ enum AgentScanner {
             executablePath: wezterm,
             arguments: ["cli", "activate-tab", "--tab-id", String(agent.tabID)]
         )
-        await NSWorkspace.shared.open(
-            URL(filePath: "/Applications/WezTerm.app")
-        )
+        await MainActor.run {
+            NSRunningApplication.runningApplications(withBundleIdentifier: "com.github.wez.wezterm")
+                .first?.activate()
+        }
     }
 
     // MARK: - Private
