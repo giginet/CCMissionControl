@@ -8,6 +8,7 @@ final class AgentListViewModel {
     private(set) var unreadPaneIDs: Set<Int> = []
     let notificationService: any NotificationServiceProtocol
     private var previousStatusByPaneID: [Int: Agent.Status] = [:]
+    private var overriddenActivePaneID: Int?
     private var timer: Timer?
 
     init(notificationService: some NotificationServiceProtocol = SystemNotificationService.shared) {
@@ -27,6 +28,7 @@ final class AgentListViewModel {
     }
 
     func setActive(paneID: Int) {
+        overriddenActivePaneID = paneID
         agents = agents.map { agent in
             Agent(
                 paneID: agent.paneID,
@@ -60,7 +62,26 @@ final class AgentListViewModel {
     }
 
     func applyResult(_ result: [Agent]) {
-        for agent in result {
+        let activePaneID = overriddenActivePaneID
+        // Clear override once the scan confirms the switch
+        if let overrideID = overriddenActivePaneID,
+           result.contains(where: { $0.paneID == overrideID && $0.isActive }) {
+            overriddenActivePaneID = nil
+        }
+
+        for var agent in result {
+            if let overrideID = activePaneID {
+                agent = Agent(
+                    paneID: agent.paneID,
+                    tabID: agent.tabID,
+                    workspace: agent.workspace,
+                    project: agent.project,
+                    cwd: agent.cwd,
+                    title: agent.title,
+                    status: agent.status,
+                    isActive: agent.paneID == overrideID
+                )
+            }
             let previousStatus = previousStatusByPaneID[agent.paneID]
             if previousStatus == .running && agent.status == .idle && !agent.isActive {
                 unreadPaneIDs.insert(agent.paneID)
