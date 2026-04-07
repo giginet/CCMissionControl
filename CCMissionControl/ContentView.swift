@@ -62,15 +62,17 @@ final class AgentListViewModel {
     }
 
     func applyResult(_ result: [Agent]) {
-        let activePaneID = overriddenActivePaneID
-        // Clear override once the scan confirms the switch
-        if let overrideID = overriddenActivePaneID,
-           result.contains(where: { $0.paneID == overrideID && $0.isActive }) {
-            overriddenActivePaneID = nil
+        // If the scan shows a different focused pane than our override,
+        // and it's not the same as before, the user switched in WezTerm directly.
+        if let overrideID = overriddenActivePaneID {
+            let scanFocused = result.first(where: { $0.isActive })?.paneID
+            if let scanFocused, scanFocused != overrideID {
+                overriddenActivePaneID = nil
+            }
         }
 
         for var agent in result {
-            if let overrideID = activePaneID {
+            if let overrideID = overriddenActivePaneID {
                 agent = Agent(
                     paneID: agent.paneID,
                     tabID: agent.tabID,
