@@ -2,11 +2,7 @@ import SwiftUI
 
 @main
 struct CCMissionControlApp: App {
-    @State private var viewModel: AgentListViewModel = {
-        let vm = AgentListViewModel()
-        vm.startScanning()
-        return vm
-    }()
+    @State private var viewModel = AgentListViewModel()
 
     init() {
         SystemNotificationService.shared.setUp()
@@ -17,6 +13,7 @@ struct CCMissionControlApp: App {
         MenuBarExtra {
             ContentView(viewModel: viewModel)
                 .frame(width: 480, height: 350)
+                .onAppear { viewModel.startScanning() }
         } label: {
             MenuBarLabel(viewModel: viewModel)
         }

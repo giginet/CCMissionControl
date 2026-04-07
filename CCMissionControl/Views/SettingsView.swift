@@ -23,7 +23,9 @@ struct SettingsView: View {
     var body: some View {
         Form {
             Section("Notifications") {
-                LabeledContent("System Permission") {
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("System Permission")
+                        .font(.body)
                     HStack(spacing: 4) {
                         Image(systemName: permissionIcon)
                             .foregroundStyle(permissionColor)
@@ -46,20 +48,21 @@ struct SettingsView: View {
             }
 
             Section("WezTerm") {
-                TextField("WezTerm CLI Path", text: $wezTermPath)
-                    .textFieldStyle(.roundedBorder)
-                HStack {
-                    Button("Browse...") {
-                        let panel = NSOpenPanel()
-                        panel.allowedContentTypes = [.application]
-                        panel.canChooseDirectories = false
-                        panel.allowsMultipleSelection = false
-                        if panel.runModal() == .OK, let url = panel.url {
-                            wezTermPath = url.appendingPathComponent("Contents/MacOS/wezterm").path
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("WezTerm CLI Path")
+                        .font(.body)
+                    HStack(spacing: 8) {
+                        TextField("", text: $wezTermPath)
+                        Button("Browse...") {
+                            let panel = NSOpenPanel()
+                            panel.allowedContentTypes = [.application]
+                            panel.canChooseDirectories = false
+                            panel.allowsMultipleSelection = false
+                            if panel.runModal() == .OK, let url = panel.url {
+                                wezTermPath = url.appendingPathComponent("Contents/MacOS/wezterm").path
+                            }
                         }
-                    }
-                    Button("Reset") {
-                        wezTermPath = defaultWezTermPath
+                        .fixedSize()
                     }
                 }
             }

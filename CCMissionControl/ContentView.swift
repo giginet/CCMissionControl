@@ -154,7 +154,3 @@ struct FooterView: View {
     }
 }
 
-#Preview("Footer") {
-    FooterView()
-        .frame(width: 480)
-}
