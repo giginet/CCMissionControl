@@ -64,6 +64,7 @@ final class AgentListViewModel {
 }
 
 struct ContentView: View {
+    @Environment(\.openSettings) private var openSettings
     let viewModel: AgentListViewModel
 
     var body: some View {
@@ -97,7 +98,10 @@ struct ContentView: View {
             }
         }
         .safeAreaInset(edge: .bottom) {
-            FooterView()
+            FooterView(
+                onSettings: { openSettings() },
+                onQuit: { NSApplication.shared.terminate(nil) }
+            )
         }
         .toolbar {
             ToolbarItem {
@@ -113,34 +117,43 @@ struct ContentView: View {
     }
 }
 
-struct FooterView: View {
-    @Environment(\.openSettings) private var openSettings
+struct FooterButton: View {
+    let icon: String
+    let title: String
+    let action: () -> Void
 
     var body: some View {
-        HStack {
-            Button {
-                openSettings()
-            } label: {
-                Label("Settings", systemImage: "gear")
-            }
-            .buttonStyle(.plain)
-            .font(.caption)
-            .foregroundStyle(.secondary)
+        Button(action: action) {
+            Image(systemName: icon)
+                .font(.system(size: 16, weight: .medium))
+                .frame(maxWidth: .infinity)
+                .padding(8)
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .foregroundStyle(.secondary)
+        .glassEffect()
+    }
+}
+
+struct FooterView: View {
+    var onSettings: () -> Void = {}
+    var onQuit: () -> Void = {}
+
+    var body: some View {
+        HStack(spacing: 8) {
+            FooterButton(icon: "gearshape", title: "Settings", action: onSettings)
+                .fixedSize()
             Spacer()
-            Button {
-                NSApplication.shared.terminate(nil)
-            } label: {
-                Label("Quit", systemImage: "power")
-            }
-            .buttonStyle(.plain)
-            .font(.caption)
-            .foregroundStyle(.secondary)
+            FooterButton(icon: "power", title: "Quit", action: onQuit)
+                .fixedSize()
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 8)
     }
 }
 
-#Preview {
-    ContentView(viewModel: AgentListViewModel())
+#Preview("Footer") {
+    FooterView()
+        .frame(width: 480)
 }
