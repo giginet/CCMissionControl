@@ -9,6 +9,7 @@ final class AgentListViewModel {
     let notificationService: any NotificationServiceProtocol
     private var previousStatusByPaneID: [Int: Agent.Status] = [:]
     private var overriddenActivePaneID: Int?
+    private var overrideSetAt: Date?
     private var timer: Timer?
 
     init(notificationService: some NotificationServiceProtocol = SystemNotificationService.shared) {
@@ -29,6 +30,7 @@ final class AgentListViewModel {
 
     func setActive(paneID: Int) {
         overriddenActivePaneID = paneID
+        overrideSetAt = Date()
         agents = agents.map { agent in
             Agent(
                 paneID: agent.paneID,
@@ -62,13 +64,18 @@ final class AgentListViewModel {
     }
 
     func applyResult(_ result: [Agent]) {
-        // Clear override when WezTerm is foreground so scan's focused_pane_id takes effect
+        // Clear override when WezTerm is foreground so scan's focused_pane_id takes effect.
+        // Skip clearing for 5 seconds after click since activateTab briefly makes WezTerm active.
         if overriddenActivePaneID != nil {
-            let wezTermIsActive = NSRunningApplication.runningApplications(
-                withBundleIdentifier: "com.github.wez.wezterm"
-            ).first?.isActive ?? false
-            if wezTermIsActive {
-                overriddenActivePaneID = nil
+            let cooldownElapsed = overrideSetAt.map { Date().timeIntervalSince($0) > 5 } ?? true
+            if cooldownElapsed {
+                let wezTermIsActive = NSRunningApplication.runningApplications(
+                    withBundleIdentifier: "com.github.wez.wezterm"
+                ).first?.isActive ?? false
+                if wezTermIsActive {
+                    overriddenActivePaneID = nil
+                    overrideSetAt = nil
+                }
             }
         }
 
