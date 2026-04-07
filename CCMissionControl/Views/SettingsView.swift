@@ -5,6 +5,7 @@ import UserNotifications
 private let defaultWezTermPath = "/Applications/WezTerm.app/Contents/MacOS/wezterm"
 
 struct SettingsView: View {
+    @AppStorage("windowMode") private var windowMode = "dropdown"
     @AppStorage("notificationsEnabled") private var notificationsEnabled = true
     @AppStorage("wezTermPath") private var wezTermPath = defaultWezTermPath
     @State private var authorizationStatus: UNAuthorizationStatus
@@ -22,6 +23,14 @@ struct SettingsView: View {
 
     var body: some View {
         Form {
+            Section("Appearance") {
+                Picker("Window Mode", selection: $windowMode) {
+                    Text("Dropdown").tag("dropdown")
+                    Text("Floating").tag("floating")
+                }
+                .pickerStyle(.segmented)
+            }
+
             Section("Notifications") {
                 VStack(alignment: .leading, spacing: 6) {
                     Text("System Permission")

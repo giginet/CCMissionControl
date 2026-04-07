@@ -1,46 +1,92 @@
+import AppKit
+import Combine
 import SwiftUI
 
 @main
 struct CCMissionControlApp: App {
-    @State private var viewModel = AgentListViewModel()
-
-    init() {
-        SystemNotificationService.shared.setUp()
-        SystemNotificationService.shared.requestAuthorization()
-    }
+    @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
 
     var body: some Scene {
-        MenuBarExtra {
-            ContentView(viewModel: viewModel)
-                .frame(width: 480, height: 350)
-                .onAppear { viewModel.startScanning() }
-        } label: {
-            MenuBarLabel(viewModel: viewModel)
-        }
-        .menuBarExtraStyle(.window)
-
         Settings {
             SettingsView()
         }
     }
 }
 
-struct MenuBarLabel: View {
-    let viewModel: AgentListViewModel
+final class AppDelegate: NSObject, NSApplicationDelegate {
+    private var statusItem: NSStatusItem!
+    private var panelController: FloatingPanelController!
+    private let viewModel = AgentListViewModel()
+    private var cancellable: AnyCancellable?
 
-    var body: some View {
+    func applicationDidFinishLaunching(_ notification: Notification) {
+        SystemNotificationService.shared.setUp()
+        SystemNotificationService.shared.requestAuthorization()
+
+        statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
+
+        if let button = statusItem.button {
+            button.action = #selector(statusItemClicked)
+            button.target = self
+            button.sendAction(on: [.leftMouseUp])
+        }
+
+        panelController = FloatingPanelController {
+            ContentView(viewModel: self.viewModel)
+                .frame(width: 480, height: 400)
+        }
+
+        viewModel.startScanning()
+        updateStatusItemLabel()
+
+        cancellable = NotificationCenter.default.publisher(for: UserDefaults.didChangeNotification)
+            .sink { [weak self] _ in self?.updateStatusItemLabel() }
+
+        Timer.scheduledTimer(withTimeInterval: 2, repeats: true) { [weak self] _ in
+            self?.updateStatusItemLabel()
+        }
+    }
+
+    @objc private func statusItemClicked() {
+        panelController.toggle(relativeTo: statusItem.button)
+    }
+
+    private func updateStatusItemLabel() {
+        guard let button = statusItem.button else { return }
+
         let runningCount = viewModel.agents.filter { $0.status == .running }.count
         let totalCount = viewModel.agents.count
         let hasUnread = !viewModel.unreadPaneIDs.isEmpty
 
-        HStack(alignment: .center, spacing: 4) {
-            if hasUnread {
-                Image(systemName: "bell.badge.fill")
+        let config = NSImage.SymbolConfiguration(pointSize: 12, weight: .medium)
+
+        let attachment = NSMutableAttributedString()
+
+        if hasUnread {
+            if let bellImage = NSImage(systemSymbolName: "bell.badge.fill", accessibilityDescription: nil)?
+                .withSymbolConfiguration(config) {
+                let bellAttachment = NSTextAttachment()
+                bellAttachment.image = bellImage
+                attachment.append(NSAttributedString(attachment: bellAttachment))
+                attachment.append(NSAttributedString(string: " "))
             }
-            Image(systemName: runningCount > 0 ? "bolt.fill" : "powersleep")
-                .imageScale(.small)
-            Text("\(runningCount > 0 ? runningCount : totalCount)")
-                .monospacedDigit()
         }
+
+        let iconName = runningCount > 0 ? "bolt.fill" : "powersleep"
+        if let iconImage = NSImage(systemSymbolName: iconName, accessibilityDescription: nil)?
+            .withSymbolConfiguration(config) {
+            let iconAttachment = NSTextAttachment()
+            iconAttachment.image = iconImage
+            attachment.append(NSAttributedString(attachment: iconAttachment))
+        }
+
+        let count = runningCount > 0 ? runningCount : totalCount
+        let countString = NSAttributedString(
+            string: " \(count)",
+            attributes: [.font: NSFont.monospacedDigitSystemFont(ofSize: 12, weight: .regular)]
+        )
+        attachment.append(countString)
+
+        button.attributedTitle = attachment
     }
 }
