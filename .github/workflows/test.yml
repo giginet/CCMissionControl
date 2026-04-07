@@ -25,7 +25,11 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Build
-        run: xcodebuild -scheme CCMissionControl -configuration Debug build
+        run: |
+          xcodebuild -scheme CCMissionControl -configuration Debug build \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO
 
       - name: Test
         run: |
@@ -33,4 +37,7 @@ jobs:
             -scheme CCMissionControl \
             -configuration Debug \
             -destination 'platform=macOS' \
-            -only-testing:CCMissionControlTests
+            -only-testing:CCMissionControlTests \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO
