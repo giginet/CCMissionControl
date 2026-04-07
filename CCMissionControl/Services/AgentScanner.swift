@@ -59,16 +59,17 @@ enum AgentScanner {
             )
             let cleanTitle = cleanUpTitle(pane.title)
 
-            agents.append(Agent(
-                paneID: pane.paneId,
-                tabID: pane.tabId,
-                workspace: pane.workspace,
-                project: project,
-                cwd: displayCWD,
-                title: cleanTitle,
-                status: claudeStatus[cpid] ?? .idle,
-                isActive: pane.paneId == focusedPaneID
-            ))
+            agents.append(
+                Agent(
+                    paneID: pane.paneId,
+                    tabID: pane.tabId,
+                    workspace: pane.workspace,
+                    project: project,
+                    cwd: displayCWD,
+                    title: cleanTitle,
+                    status: claudeStatus[cpid] ?? .idle,
+                    isActive: pane.paneId == focusedPaneID
+                ))
         }
 
         agents.sort { a, b in
@@ -157,7 +158,8 @@ enum AgentScanner {
 
     private nonisolated static func parseCWD(_ cwd: String) -> String {
         if cwd.hasPrefix("file://"),
-           let url = URL(string: cwd) {
+            let url = URL(string: cwd)
+        {
             return url.path
         }
         return cwd
@@ -167,7 +169,8 @@ enum AgentScanner {
         var result = title
         // Strip leading braille/spinner characters and whitespace
         while let first = result.unicodeScalars.first,
-              !first.properties.isAlphabetic && !first.properties.isASCIIHexDigit && first != " " {
+            !first.properties.isAlphabetic && !first.properties.isASCIIHexDigit && first != " "
+        {
             result = String(result.unicodeScalars.dropFirst())
         }
         return result.trimmingCharacters(in: .whitespaces)
@@ -186,7 +189,7 @@ nonisolated struct ProcessTree: Sendable {
         var byTTY: [String: [ProcessEntry]] = [:]
         var claudes: Set<Int> = []
 
-        let lines = output.components(separatedBy: "\n").dropFirst() // skip header
+        let lines = output.components(separatedBy: "\n").dropFirst()  // skip header
         for line in lines {
             let trimmed = line.trimmingCharacters(in: .whitespaces)
             guard !trimmed.isEmpty else { continue }
@@ -194,8 +197,9 @@ nonisolated struct ProcessTree: Sendable {
             let parts = trimmed.split(separator: " ", maxSplits: 3, omittingEmptySubsequences: true)
                 .map(String.init)
             guard parts.count >= 4,
-                  let pid = Int(parts[0]),
-                  let ppid = Int(parts[1]) else { continue }
+                let pid = Int(parts[0]),
+                let ppid = Int(parts[1])
+            else { continue }
 
             let entry = ProcessEntry(
                 pid: pid,

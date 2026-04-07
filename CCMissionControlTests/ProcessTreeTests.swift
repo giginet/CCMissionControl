@@ -1,5 +1,6 @@
-import Testing
 import Foundation
+import Testing
+
 @testable import CCMissionControl
 
 // MARK: - ProcessTree Parsing
@@ -8,17 +9,17 @@ struct ProcessTreeParsingTests {
     /// Test with realistic `ps -eo pid,ppid,tty,comm` output.
     /// Regression test for the bug where double spaces between TTY and COMM caused a leading space in command names.
     static let realisticPSOutput = """
-      PID  PPID TTY      COMM
-        1     0 ??       /sbin/launchd
-      331     1 ??       /usr/libexec/logd
-    15096 15095 ttys000  /bin/zsh
-    15494 15096 ttys000  claude
-    15511 15494 ttys000  npx
-    15512 15494 ttys000  bun
-    29869 15494 ttys000  caffeinate
-    22190 22189 ttys009  /bin/zsh
-    22257 22190 ttys009  claude
-    """
+          PID  PPID TTY      COMM
+            1     0 ??       /sbin/launchd
+          331     1 ??       /usr/libexec/logd
+        15096 15095 ttys000  /bin/zsh
+        15494 15096 ttys000  claude
+        15511 15494 ttys000  npx
+        15512 15494 ttys000  bun
+        29869 15494 ttys000  caffeinate
+        22190 22189 ttys009  /bin/zsh
+        22257 22190 ttys009  claude
+        """
 
     @Test func parsesProcessEntries() {
         let tree = ProcessTree(parsing: Self.realisticPSOutput)
@@ -59,9 +60,9 @@ struct ProcessTreeParsingTests {
 
     @Test func handlesFullPathClaudeCommand() {
         let output = """
-          PID  PPID TTY      COMM
-          100    99 ttys001  /usr/local/bin/claude
-        """
+              PID  PPID TTY      COMM
+              100    99 ttys001  /usr/local/bin/claude
+            """
         let tree = ProcessTree(parsing: output)
         #expect(tree.claudePIDs == [100])
     }
@@ -71,13 +72,13 @@ struct ProcessTreeParsingTests {
 
 struct AncestorDetectionTests {
     static let psOutput = """
-      PID  PPID TTY      COMM
-    15095 15094 ttys000  login
-    15096 15095 ttys000  /bin/zsh
-    15494 15096 ttys000  claude
-    15511 15494 ttys000  npx
-    15655 15511 ttys000  node
-    """
+          PID  PPID TTY      COMM
+        15095 15094 ttys000  login
+        15096 15095 ttys000  /bin/zsh
+        15494 15096 ttys000  claude
+        15511 15494 ttys000  npx
+        15655 15511 ttys000  node
+        """
 
     @Test func findsDirectClaudeProcess() {
         let tree = ProcessTree(parsing: Self.psOutput)
@@ -113,10 +114,10 @@ struct AncestorDetectionTests {
     @Test func handlesCircularParentChain() {
         // Must not infinite-loop when ppid chain forms a cycle
         let output = """
-          PID  PPID TTY      COMM
-          100   200 ttys000  /bin/zsh
-          200   100 ttys000  /bin/zsh
-        """
+              PID  PPID TTY      COMM
+              100   200 ttys000  /bin/zsh
+              200   100 ttys000  /bin/zsh
+            """
         let tree = ProcessTree(parsing: output)
         let result = tree.ancestorClaude(of: 100, claudePIDs: [])
         #expect(result == nil)
@@ -128,11 +129,11 @@ struct AncestorDetectionTests {
 struct StatusDetectionTests {
     @Test func detectsRunningWhenCaffeinateIsChild() {
         let output = """
-          PID  PPID TTY      COMM
-          100    99 ttys000  /bin/zsh
-          200   100 ttys000  claude
-          300   200 ttys000  caffeinate
-        """
+              PID  PPID TTY      COMM
+              100    99 ttys000  /bin/zsh
+              200   100 ttys000  claude
+              300   200 ttys000  caffeinate
+            """
         let tree = ProcessTree(parsing: output)
         let children = tree.children(of: 200)
         let hasCaffeinate = children.contains { $0.commandName == "caffeinate" }
@@ -141,11 +142,11 @@ struct StatusDetectionTests {
 
     @Test func detectsIdleWhenNoCaffeinate() {
         let output = """
-          PID  PPID TTY      COMM
-          100    99 ttys000  /bin/zsh
-          200   100 ttys000  claude
-          300   200 ttys000  npx
-        """
+              PID  PPID TTY      COMM
+              100    99 ttys000  /bin/zsh
+              200   100 ttys000  claude
+              300   200 ttys000  npx
+            """
         let tree = ProcessTree(parsing: output)
         let children = tree.children(of: 200)
         let hasCaffeinate = children.contains { $0.commandName == "caffeinate" }
@@ -154,10 +155,10 @@ struct StatusDetectionTests {
 
     @Test func caffeinateOnDifferentParentDoesNotCount() {
         let output = """
-          PID  PPID TTY      COMM
-          200   100 ttys000  claude
-          300   100 ttys000  caffeinate
-        """
+              PID  PPID TTY      COMM
+              200   100 ttys000  claude
+              300   100 ttys000  caffeinate
+            """
         let tree = ProcessTree(parsing: output)
         // caffeinate (300) has parent 100, not a child of claude (200)
         let children = tree.children(of: 200)

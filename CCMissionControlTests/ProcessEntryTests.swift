@@ -1,5 +1,6 @@
-import Testing
 import Foundation
+import Testing
+
 @testable import CCMissionControl
 
 struct ProcessEntryModelTests {
@@ -14,7 +15,9 @@ struct ProcessEntryModelTests {
     }
 
     @Test func commandNameForDeepPath() {
-        let entry = ProcessEntry(pid: 1, ppid: 0, tty: "??", command: "/Applications/Xcode.app/Contents/Developer/usr/bin/sourcekit-lsp")
+        let entry = ProcessEntry(
+            pid: 1, ppid: 0, tty: "??",
+            command: "/Applications/Xcode.app/Contents/Developer/usr/bin/sourcekit-lsp")
         #expect(entry.commandName == "sourcekit-lsp")
     }
 }

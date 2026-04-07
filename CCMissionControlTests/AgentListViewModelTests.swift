@@ -1,5 +1,6 @@
-import Testing
 import Foundation
+import Testing
+
 @testable import CCMissionControl
 
 // isActive is determined by matching focused_pane_id from list-clients.

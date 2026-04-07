@@ -69,9 +69,10 @@ final class AgentListViewModel {
         if overriddenActivePaneID != nil {
             let cooldownElapsed = overrideSetAt.map { Date().timeIntervalSince($0) > 5 } ?? true
             if cooldownElapsed {
-                let wezTermIsActive = NSRunningApplication.runningApplications(
-                    withBundleIdentifier: "com.github.wez.wezterm"
-                ).first?.isActive ?? false
+                let wezTermIsActive =
+                    NSRunningApplication.runningApplications(
+                        withBundleIdentifier: "com.github.wez.wezterm"
+                    ).first?.isActive ?? false
                 if wezTermIsActive {
                     overriddenActivePaneID = nil
                     overrideSetAt = nil
@@ -97,7 +98,9 @@ final class AgentListViewModel {
                 effectiveAgent = agent
             }
             let previousStatus = previousStatusByPaneID[effectiveAgent.paneID]
-            if previousStatus == .running && effectiveAgent.status == .idle && !effectiveAgent.isActive {
+            if previousStatus == .running && effectiveAgent.status == .idle
+                && !effectiveAgent.isActive
+            {
                 unreadPaneIDs.insert(effectiveAgent.paneID)
                 if notificationsEnabled {
                     notificationService.sendCompletionNotification(for: effectiveAgent)
@@ -205,4 +208,3 @@ struct FooterView: View {
         .padding(.vertical, 8)
     }
 }
-

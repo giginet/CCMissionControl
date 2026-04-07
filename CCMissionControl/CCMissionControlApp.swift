@@ -63,8 +63,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let attachment = NSMutableAttributedString()
 
         if hasUnread {
-            if let bellImage = NSImage(systemSymbolName: "bell.badge.fill", accessibilityDescription: nil)?
-                .withSymbolConfiguration(config) {
+            if let bellImage = NSImage(
+                systemSymbolName: "bell.badge.fill", accessibilityDescription: nil)?
+                .withSymbolConfiguration(config)
+            {
                 let bellAttachment = NSTextAttachment()
                 bellAttachment.image = bellImage
                 attachment.append(NSAttributedString(attachment: bellAttachment))
@@ -74,7 +76,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         let iconName = runningCount > 0 ? "bolt.fill" : "powersleep"
         if let iconImage = NSImage(systemSymbolName: iconName, accessibilityDescription: nil)?
-            .withSymbolConfiguration(config) {
+            .withSymbolConfiguration(config)
+        {
             let iconAttachment = NSTextAttachment()
             iconAttachment.image = iconImage
             attachment.append(NSAttributedString(attachment: iconAttachment))

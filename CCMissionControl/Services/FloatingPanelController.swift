@@ -26,7 +26,8 @@ final class FloatingPanelController {
     func show(relativeTo statusItemButton: NSStatusBarButton?) {
         let panel = makeOrReusePanel()
 
-        let isFloating = (UserDefaults.standard.string(forKey: "windowMode") ?? "dropdown") == "floating"
+        let isFloating =
+            (UserDefaults.standard.string(forKey: "windowMode") ?? "dropdown") == "floating"
 
         if isFloating {
             panel.level = .floating
@@ -44,7 +45,8 @@ final class FloatingPanelController {
             panel.styleMask.remove(.titled)
 
             if let button = statusItemButton {
-                let buttonRect = button.window?.convertToScreen(button.convert(button.bounds, to: nil)) ?? .zero
+                let buttonRect =
+                    button.window?.convertToScreen(button.convert(button.bounds, to: nil)) ?? .zero
                 let panelWidth = panel.frame.width
                 let x = buttonRect.midX - panelWidth / 2
                 let y = buttonRect.minY - panel.frame.height

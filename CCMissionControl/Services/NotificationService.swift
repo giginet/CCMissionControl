@@ -6,7 +6,9 @@ protocol NotificationServiceProtocol: Sendable {
     func getAuthorizationStatus() async -> UNAuthorizationStatus
 }
 
-final class SystemNotificationService: NSObject, NotificationServiceProtocol, UNUserNotificationCenterDelegate {
+final class SystemNotificationService: NSObject, NotificationServiceProtocol,
+    UNUserNotificationCenterDelegate
+{
     static let shared = SystemNotificationService()
 
     private override init() {
@@ -18,7 +20,9 @@ final class SystemNotificationService: NSObject, NotificationServiceProtocol, UN
     }
 
     func requestAuthorization() {
-        UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound, .badge]) { _, _ in }
+        UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound, .badge]) {
+            _, _ in
+        }
     }
 
     func getAuthorizationStatus() async -> UNAuthorizationStatus {
@@ -71,7 +75,8 @@ final class SystemNotificationService: NSObject, NotificationServiceProtocol, UN
     func userNotificationCenter(
         _ center: UNUserNotificationCenter,
         willPresent notification: UNNotification,
-        withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void
+        withCompletionHandler completionHandler:
+            @escaping (UNNotificationPresentationOptions) -> Void
     ) {
         completionHandler([.banner, .sound, .list])
     }

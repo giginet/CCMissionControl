@@ -41,7 +41,10 @@ struct SettingsView: View {
                         Text(permissionText)
                         if authorizationStatus == .denied {
                             Button("Open Settings") {
-                                if let url = URL(string: "x-apple.systempreferences:com.apple.Notifications-Settings.extension") {
+                                if let url = URL(
+                                    string:
+                                        "x-apple.systempreferences:com.apple.Notifications-Settings.extension"
+                                ) {
                                     NSWorkspace.shared.open(url)
                                 }
                             }
@@ -68,7 +71,8 @@ struct SettingsView: View {
                             panel.canChooseDirectories = false
                             panel.allowsMultipleSelection = false
                             if panel.runModal() == .OK, let url = panel.url {
-                                wezTermPath = url.appendingPathComponent("Contents/MacOS/wezterm").path
+                                wezTermPath =
+                                    url.appendingPathComponent("Contents/MacOS/wezterm").path
                             }
                         }
                         .fixedSize()
