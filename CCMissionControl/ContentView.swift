@@ -62,17 +62,6 @@ final class AgentListViewModel {
     }
 
     func applyResult(_ result: [Agent]) {
-        // Only clear override when WezTerm is the active app,
-        // meaning focused_pane_id is reliably up to date.
-        if overriddenActivePaneID != nil {
-            let wezTermIsActive = NSRunningApplication.runningApplications(
-                withBundleIdentifier: "com.github.wez.wezterm"
-            ).first?.isActive ?? false
-            if wezTermIsActive {
-                overriddenActivePaneID = nil
-            }
-        }
-
         for var agent in result {
             if let overrideID = overriddenActivePaneID {
                 agent = Agent(
