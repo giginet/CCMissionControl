@@ -2,10 +2,23 @@ import SwiftUI
 import UniformTypeIdentifiers
 import UserNotifications
 
+private let defaultWezTermPath = "/Applications/WezTerm.app/Contents/MacOS/wezterm"
+
 struct SettingsView: View {
     @AppStorage("notificationsEnabled") private var notificationsEnabled = true
-    @AppStorage("wezTermPath") private var wezTermPath = ""
-    @State private var authorizationStatus: UNAuthorizationStatus = .notDetermined
+    @AppStorage("wezTermPath") private var wezTermPath = defaultWezTermPath
+    @State private var authorizationStatus: UNAuthorizationStatus
+    private let skipNotificationCheck: Bool
+
+    init(previewAuthorizationStatus: UNAuthorizationStatus? = nil) {
+        if let status = previewAuthorizationStatus {
+            _authorizationStatus = State(initialValue: status)
+            skipNotificationCheck = true
+        } else {
+            _authorizationStatus = State(initialValue: .notDetermined)
+            skipNotificationCheck = false
+        }
+    }
 
     var body: some View {
         Form {
@@ -33,31 +46,28 @@ struct SettingsView: View {
             }
 
             Section("WezTerm") {
-                LabeledContent("Application Path") {
-                    HStack {
-                        TextField("Auto-detect", text: $wezTermPath)
-                            .textFieldStyle(.roundedBorder)
-                        Button("Browse...") {
-                            let panel = NSOpenPanel()
-                            panel.allowedContentTypes = [.application]
-                            panel.canChooseDirectories = false
-                            panel.allowsMultipleSelection = false
-                            if panel.runModal() == .OK, let url = panel.url {
-                                wezTermPath = url.appendingPathComponent("Contents/MacOS/wezterm").path
-                            }
+                TextField("WezTerm CLI Path", text: $wezTermPath)
+                    .textFieldStyle(.roundedBorder)
+                HStack {
+                    Button("Browse...") {
+                        let panel = NSOpenPanel()
+                        panel.allowedContentTypes = [.application]
+                        panel.canChooseDirectories = false
+                        panel.allowsMultipleSelection = false
+                        if panel.runModal() == .OK, let url = panel.url {
+                            wezTermPath = url.appendingPathComponent("Contents/MacOS/wezterm").path
                         }
                     }
-                }
-                if wezTermPath.isEmpty {
-                    Text("Using auto-detected WezTerm installation.")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+                    Button("Reset") {
+                        wezTermPath = defaultWezTermPath
+                    }
                 }
             }
         }
         .formStyle(.grouped)
         .frame(width: 450)
         .task {
+            guard !skipNotificationCheck else { return }
             authorizationStatus = await SystemNotificationService.shared.getAuthorizationStatus()
         }
     }
@@ -86,4 +96,8 @@ struct SettingsView: View {
         default: "Not Determined"
         }
     }
+}
+
+#Preview {
+    SettingsView(previewAuthorizationStatus: .authorized)
 }
