@@ -26,6 +26,21 @@ final class AgentListViewModel {
         unreadPaneIDs.remove(agent.paneID)
     }
 
+    func setActive(paneID: Int) {
+        agents = agents.map { agent in
+            Agent(
+                paneID: agent.paneID,
+                tabID: agent.tabID,
+                workspace: agent.workspace,
+                project: agent.project,
+                cwd: agent.cwd,
+                title: agent.title,
+                status: agent.status,
+                isActive: agent.paneID == paneID
+            )
+        }
+    }
+
     func scanNow() {
         guard !isScanning else { return }
         isScanning = true
@@ -91,6 +106,7 @@ struct ContentView: View {
                     .contentShape(Rectangle())
                     .onTapGesture {
                         viewModel.markAsRead(agent)
+                        viewModel.setActive(paneID: agent.paneID)
                         Task {
                             await AgentScanner.activateTab(for: agent)
                         }
