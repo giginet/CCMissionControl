@@ -62,6 +62,16 @@ final class AgentListViewModel {
     }
 
     func applyResult(_ result: [Agent]) {
+        // Clear override when WezTerm is foreground so scan's focused_pane_id takes effect
+        if overriddenActivePaneID != nil {
+            let wezTermIsActive = NSRunningApplication.runningApplications(
+                withBundleIdentifier: "com.github.wez.wezterm"
+            ).first?.isActive ?? false
+            if wezTermIsActive {
+                overriddenActivePaneID = nil
+            }
+        }
+
         var updatedAgents: [Agent] = []
         for agent in result {
             let effectiveAgent: Agent
