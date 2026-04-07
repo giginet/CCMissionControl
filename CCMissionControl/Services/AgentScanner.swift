@@ -88,15 +88,15 @@ enum AgentScanner {
             executablePath: wezterm,
             arguments: ["cli", "activate-tab", "--tab-id", String(agent.tabID)]
         )
-        await MainActor.run {
+        _ = await MainActor.run {
             NSRunningApplication.runningApplications(withBundleIdentifier: "com.github.wez.wezterm")
-                .first?.activate(options: .activateIgnoringOtherApps)
+                .first?.activate()
         }
     }
 
     // MARK: - Private
 
-    private static let wezTermPaths = [
+    private nonisolated static let wezTermPaths = [
         "/Applications/WezTerm.app/Contents/MacOS/wezterm",
         "/opt/homebrew/bin/wezterm",
         "/usr/local/bin/wezterm",

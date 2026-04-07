@@ -6,7 +6,7 @@ struct ProcessEntry: Sendable {
     let tty: String
     let command: String
 
-    var commandName: String {
+    nonisolated var commandName: String {
         (command as NSString).lastPathComponent
     }
 }
