@@ -1,3 +1,4 @@
+import ServiceManagement
 import SwiftUI
 import UniformTypeIdentifiers
 import UserNotifications
@@ -29,6 +30,7 @@ struct SettingsView: View {
                     Text("Floating").tag("floating")
                 }
                 .pickerStyle(.segmented)
+                Toggle("Launch at Login", isOn: launchAtLoginBinding)
             }
 
             Section("Notifications") {
@@ -86,6 +88,23 @@ struct SettingsView: View {
             guard !skipNotificationCheck else { return }
             authorizationStatus = await SystemNotificationService.shared.getAuthorizationStatus()
         }
+    }
+
+    private var launchAtLoginBinding: Binding<Bool> {
+        Binding(
+            get: { SMAppService.mainApp.status == .enabled },
+            set: { newValue in
+                do {
+                    if newValue {
+                        try SMAppService.mainApp.register()
+                    } else {
+                        try SMAppService.mainApp.unregister()
+                    }
+                } catch {
+                    // Registration may fail silently
+                }
+            }
+        )
     }
 
     private var permissionIcon: String {
