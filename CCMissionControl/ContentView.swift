@@ -85,7 +85,8 @@ struct ContentView: View {
                 List(viewModel.agents) { agent in
                     AgentRowView(
                         agent: agent,
-                        isUnread: viewModel.unreadPaneIDs.contains(agent.paneID)
+                        isUnread: viewModel.unreadPaneIDs.contains(agent.paneID),
+                        isActive: agent.isActive
                     )
                     .contentShape(Rectangle())
                     .onTapGesture {

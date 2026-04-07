@@ -3,6 +3,7 @@ import SwiftUI
 struct AgentRowView: View {
     let agent: Agent
     var isUnread: Bool = false
+    var isActive: Bool = false
 
     var body: some View {
         HStack(spacing: 12) {
@@ -44,5 +45,10 @@ struct AgentRowView: View {
             }
         }
         .padding(.vertical, 4)
+        .padding(.horizontal, 8)
+        .background(
+            isActive ? Color.accentColor.opacity(0.15) : Color.clear,
+            in: RoundedRectangle(cornerRadius: 6)
+        )
     }
 }
