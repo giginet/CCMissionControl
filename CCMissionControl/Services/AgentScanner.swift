@@ -89,7 +89,7 @@ enum AgentScanner {
         )
         await MainActor.run {
             NSRunningApplication.runningApplications(withBundleIdentifier: "com.github.wez.wezterm")
-                .first?.activate()
+                .first?.activate(options: .activateIgnoringOtherApps)
         }
     }
 
