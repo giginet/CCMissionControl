@@ -33,8 +33,9 @@ final class FloatingPanelController {
             panel.hidesOnDeactivate = false
             panel.styleMask.insert(.titled)
             panel.title = "CCMissionControl"
+            panel.setFrameAutosaveName("FloatingPanel")
 
-            if !panel.isVisible {
+            if !panel.isVisible && !panel.setFrameUsingName("FloatingPanel") {
                 panel.center()
             }
         } else {
