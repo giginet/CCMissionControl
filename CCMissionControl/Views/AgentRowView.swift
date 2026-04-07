@@ -17,9 +17,11 @@ struct AgentRowView: View {
                             .foregroundStyle(.orange)
                             .font(.caption)
                     }
-                    Text(agent.workspace)
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
+                    if agent.workspace != "default" {
+                        Text(agent.workspace)
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                    }
                     Spacer()
                     Text(agent.status.rawValue)
                         .font(.caption)
