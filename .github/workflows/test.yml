@@ -27,6 +27,7 @@ jobs:
       - name: Build
         run: |
           xcodebuild -scheme CCMissionControl -configuration Debug build \
+            -skipPackagePluginValidation \
             CODE_SIGN_IDENTITY="" \
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGNING_ALLOWED=NO
@@ -38,6 +39,7 @@ jobs:
             -configuration Debug \
             -destination 'platform=macOS' \
             -only-testing:CCMissionControlTests \
+            -skipPackagePluginValidation \
             CODE_SIGN_IDENTITY="" \
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGNING_ALLOWED=NO
