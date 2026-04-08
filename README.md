@@ -1,13 +1,13 @@
 # CCMissionControl
 
-![](Documents/icon.png)
-
 [![macOS](https://img.shields.io/badge/macOS-26%2B-white?logo=apple&logoColor=white)](https://developer.apple.com/macos/)
 [![Swift](https://img.shields.io/badge/Swift-6.3-orange?logo=swift&logoColor=white)](https://swift.org/)
 [![WezTerm](https://img.shields.io/badge/WezTerm-required-purple?logo=wezterm&logoColor=white)](https://wezfurlong.org/wezterm/)
 [![CI](https://github.com/giginet/CCMissionControl/actions/workflows/test.yml/badge.svg)](https://github.com/giginet/CCMissionControl/actions/workflows/test.yml)
 [![License](https://img.shields.io/badge/License-Apache%202.0-green)](LICENSE)
 [![Release](https://img.shields.io/github/v/release/giginet/CCMissionControl)](https://github.com/giginet/CCMissionControl/releases/latest)
+
+<img src="Documents/icon.png" width="128px">
 
 A macOS menu bar app that monitors running [Claude Code](https://docs.anthropic.com/en/docs/claude-code) sessions in [WezTerm](https://wezfurlong.org/wezterm/).
 
@@ -55,3 +55,7 @@ It matches WezTerm panes to Claude Code processes by normalizing TTY names and w
 ## Acknowledgments
 
 Inspired by [wez-cc-viewer](https://github.com/sorafujitani/wez-cc-viewer).
+
+## License
+
+Apache 2.0 License
