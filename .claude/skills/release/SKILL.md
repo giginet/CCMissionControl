@@ -21,8 +21,9 @@ Current tags:
 4. **Tag**: `git tag $ARGUMENTS`
 5. **Push**: `git push && git push origin $ARGUMENTS`
 6. **Notarize**: Run `./scripts/notarize.sh`
-7. **GitHub Release**: Create a release with the notarized zip attached:
+7. **Rename zip**: `mv CCMissionControl.zip CCMissionControl-$ARGUMENTS.zip`
+8. **GitHub Release**: Create a release with the notarized zip attached:
    ```
-   gh release create $ARGUMENTS CCMissionControl.zip --title "v$ARGUMENTS" --generate-notes
+   gh release create $ARGUMENTS CCMissionControl-$ARGUMENTS.zip --title "v$ARGUMENTS" --generate-notes
    ```
-8. Report the release URL to the user.
+9. Report the release URL to the user.
