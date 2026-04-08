@@ -38,13 +38,22 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         viewModel.startScanning()
         updateStatusItemLabel()
+        updateActivationPolicy()
 
         cancellable = NotificationCenter.default.publisher(for: UserDefaults.didChangeNotification)
-            .sink { [weak self] _ in self?.updateStatusItemLabel() }
+            .sink { [weak self] _ in
+                self?.updateStatusItemLabel()
+                self?.updateActivationPolicy()
+            }
 
         Timer.scheduledTimer(withTimeInterval: 2, repeats: true) { [weak self] _ in
             self?.updateStatusItemLabel()
         }
+    }
+
+    private func updateActivationPolicy() {
+        let showInDock = UserDefaults.standard.bool(forKey: "showInDock")
+        NSApplication.shared.setActivationPolicy(showInDock ? .regular : .accessory)
     }
 
     @objc private func statusItemClicked() {

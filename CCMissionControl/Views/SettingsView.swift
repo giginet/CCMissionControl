@@ -7,6 +7,7 @@ import UserNotifications
 private let defaultWezTermPath = "/Applications/WezTerm.app/Contents/MacOS/wezterm"
 
 struct SettingsView: View {
+    @AppStorage("showInDock") private var showInDock = false
     @AppStorage("windowMode") private var windowMode = "dropdown"
     @AppStorage("notificationsEnabled") private var notificationsEnabled = true
     @AppStorage("wezTermPath") private var wezTermPath = defaultWezTermPath
@@ -32,6 +33,7 @@ struct SettingsView: View {
                 }
                 .pickerStyle(.segmented)
                 Toggle("Launch at Login", isOn: launchAtLoginBinding)
+                Toggle("Show in Dock", isOn: $showInDock)
             }
 
             Section("Notifications") {
