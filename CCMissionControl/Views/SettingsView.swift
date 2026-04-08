@@ -1,3 +1,4 @@
+import Milepost
 import ServiceManagement
 import SwiftUI
 import UniformTypeIdentifiers
@@ -81,12 +82,17 @@ struct SettingsView: View {
                     }
                 }
             }
+
+            Section {
+                aboutSection
+            }
         }
         .formStyle(.grouped)
         .frame(width: 450)
         .task {
             guard !skipNotificationCheck else { return }
-            authorizationStatus = await SystemNotificationService.shared.getAuthorizationStatus()
+            authorizationStatus = await SystemNotificationService.shared
+                .getAuthorizationStatus()
         }
     }
 
@@ -130,6 +136,38 @@ struct SettingsView: View {
         case .provisional: "Provisional"
         default: "Not Determined"
         }
+    }
+
+    private var aboutSection: some View {
+        VStack(spacing: 12) {
+            Image(.icon)
+                .resizable()
+                .frame(width: 64, height: 64)
+                .clipShape(RoundedRectangle(cornerRadius: 12))
+
+            Text("CCMissionControl")
+                .font(.headline)
+
+            let version =
+                Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "?"
+            if let revision = RevisionLoader.load() {
+                Text("v\(version) (\(revision.shortHash))")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            } else {
+                Text("v\(version)")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+
+            Link(
+                "giginet/CCMissionControl",
+                destination: URL(string: "https://github.com/giginet/CCMissionControl")!
+            )
+            .font(.caption)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 8)
     }
 }
 

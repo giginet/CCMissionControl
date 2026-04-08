@@ -1,7 +1,17 @@
 {
-  "fill" : {
-    "solid" : "display-p3:0.80452,0.50077,0.38681,1.00000"
-  },
+  "fill-specializations" : [
+    {
+      "value" : {
+        "solid" : "display-p3:0.85746,0.40916,0.26525,1.00000"
+      }
+    },
+    {
+      "appearance" : "dark",
+      "value" : {
+        "solid" : "display-p3:0.72069,0.37390,0.26588,1.00000"
+      }
+    }
+  ],
   "groups" : [
     {
       "blur-material" : null,
@@ -9,50 +19,68 @@
         {
           "blend-mode-specializations" : [
             {
-              "appearance" : "light",
-              "idiom" : "macOS",
-              "value" : "normal"
+              "appearance" : "dark",
+              "value" : "darken"
             }
           ],
-          "fill-specializations" : [
-            {
-              "value" : {
-                "linear-gradient" : [
-                  "extended-srgb:0.00000,0.76471,0.81569,1.00000",
-                  "extended-gray:1.00000,1.00000"
-                ]
-              }
-            },
+          "fill" : {
+            "solid" : "extended-srgb:1.00000,0.80000,0.00000,1.00000"
+          },
+          "image-name" : "Bolt.svg",
+          "name" : "Bolt",
+          "opacity" : 0.8,
+          "position" : {
+            "scale" : 7,
+            "translation-in-points" : [
+              2.814700000000016,
+              14.798486223927284
+            ]
+          }
+        },
+        {
+          "blend-mode-specializations" : [
             {
               "appearance" : "dark",
-              "value" : {
-                "linear-gradient" : [
-                  "display-p3:0.79976,0.48597,0.36857,1.00000",
-                  "extended-srgb:0.00000,0.76471,0.81569,1.00000"
-                ]
+              "value" : "darken"
+            }
+          ],
+          "fill" : {
+            "linear-gradient" : [
+              "extended-srgb:0.38039,0.33333,0.96078,1.00000",
+              "extended-srgb:0.79608,0.18824,0.87843,1.00000"
+            ],
+            "orientation" : {
+              "start" : {
+                "x" : 0.5,
+                "y" : 0
+              },
+              "stop" : {
+                "x" : 0.5,
+                "y" : 0.7
               }
             }
-          ],
+          },
           "glass" : true,
-          "image-name" : "bolt.fill.svg",
-          "name" : "bolt.fill",
-          "opacity-specializations" : [
-            {
-              "appearance" : "light",
-              "idiom" : "macOS",
-              "value" : 1
-            }
-          ],
+          "image-name" : "Gauge.svg",
+          "name" : "Gauge",
           "position" : {
-            "scale" : 8,
+            "scale" : 7,
             "translation-in-points" : [
-              0,
-              0
+              0.07349999999996726,
+              -43.553624499000875
             ]
           }
         }
       ],
-      "lighting" : "combined",
+      "lighting-specializations" : [
+        {
+          "value" : "individual"
+        },
+        {
+          "appearance" : "dark",
+          "value" : "individual"
+        }
+      ],
       "shadow" : {
         "kind" : "neutral",
         "opacity" : 0.5

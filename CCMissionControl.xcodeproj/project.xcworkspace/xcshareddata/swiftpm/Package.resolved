@@ -1,0 +1,15 @@
+{
+  "originHash" : "9a527feaefb39055dd7e301cf9664bfa10a392ecbc0aa4d200726f08bdb93a28",
+  "pins" : [
+    {
+      "identity" : "milepost",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/giginet/Milepost.git",
+      "state" : {
+        "revision" : "4a3ad903510f1fd166169adfd59d45ce715f8e1e",
+        "version" : "1.0.0"
+      }
+    }
+  ],
+  "version" : 3
+}

@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		07C250092F85E8B4006E42A8 /* Milepost in Frameworks */ = {isa = PBXBuildFile; productRef = 11F9E9A24E683CA8FA779714 /* Milepost */; };
 		07C780CA2F7D6C3800C348DA /* AppIcon.icon in Resources */ = {isa = PBXBuildFile; fileRef = 07C780C92F7D6C3800C348DA /* AppIcon.icon */; };
 /* End PBXBuildFile section */
 
@@ -44,6 +45,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				07C250092F85E8B4006E42A8 /* Milepost in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -90,12 +92,14 @@
 			buildRules = (
 			);
 			dependencies = (
+				07C250302F85E8DC006E42A8 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				07C780412F7D4E7B00C348DA /* CCMissionControl */,
 			);
 			name = CCMissionControl;
 			packageProductDependencies = (
+				11F9E9A24E683CA8FA779714 /* Milepost */,
 			);
 			productName = CCMissionControl;
 			productReference = 07C7803F2F7D4E7B00C348DA /* CCMissionControl.app */;
@@ -152,6 +156,9 @@
 			);
 			mainGroup = 07C780362F7D4E7B00C348DA;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				915AFFAE188BB58BFD75BB63 /* XCRemoteSwiftPackageReference "Milepost" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 07C780402F7D4E7B00C348DA /* Products */;
 			projectDirPath = "";
@@ -199,6 +206,10 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
+		07C250302F85E8DC006E42A8 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			productRef = 07C2502F2F85E8DC006E42A8 /* PrepareMilepost */;
+		};
 		07C7804E2F7D4E7C00C348DA /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = 07C7803E2F7D4E7B00C348DA /* CCMissionControl */;
@@ -330,6 +341,7 @@
 		07C780612F7D4E7C00C348DA /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				APP_INTENTS_METADATA_EXTRACTION_ENABLED = NO;
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
@@ -350,7 +362,6 @@
 				MARKETING_VERSION = 0.2.0;
 				PRODUCT_BUNDLE_IDENTIFIER = org.giginet.CCMissionControl;
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				APP_INTENTS_METADATA_EXTRACTION_ENABLED = NO;
 				REGISTER_APP_GROUPS = YES;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
@@ -364,6 +375,7 @@
 		07C780622F7D4E7C00C348DA /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				APP_INTENTS_METADATA_EXTRACTION_ENABLED = NO;
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
@@ -384,7 +396,6 @@
 				MARKETING_VERSION = 0.2.0;
 				PRODUCT_BUNDLE_IDENTIFIER = org.giginet.CCMissionControl;
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				APP_INTENTS_METADATA_EXTRACTION_ENABLED = NO;
 				REGISTER_APP_GROUPS = YES;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
@@ -468,6 +479,30 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		915AFFAE188BB58BFD75BB63 /* XCRemoteSwiftPackageReference "Milepost" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/giginet/Milepost.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.0.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		07C2502F2F85E8DC006E42A8 /* PrepareMilepost */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 915AFFAE188BB58BFD75BB63 /* XCRemoteSwiftPackageReference "Milepost" */;
+			productName = "plugin:PrepareMilepost";
+		};
+		11F9E9A24E683CA8FA779714 /* Milepost */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 915AFFAE188BB58BFD75BB63 /* XCRemoteSwiftPackageReference "Milepost" */;
+			productName = Milepost;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 07C780372F7D4E7B00C348DA /* Project object */;
 }
