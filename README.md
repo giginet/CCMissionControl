@@ -15,12 +15,12 @@ A macOS menu bar app that monitors running [Claude Code](https://docs.anthropic.
 
 ![](Documents/screenshot.png)
 
-- Detects Claude Code sessions by cross-referencing WezTerm panes with system processes
-- Shows running/idle status based on `caffeinate` child process detection
-- Menu bar indicator with session count and activity status
-- Unread notification badge when a session completes while you're on another tab
-- Click a session to switch to its WezTerm tab
-- Auto-clears notifications when you return to the tab
+- Detects running Claude Code sessions via WezTerm CLI and process tree inspection
+- Menu bar icon showing session count with running/idle status
+- macOS notifications and unread badges when sessions complete in the background
+- Click to switch WezTerm tabs, auto-clear on focus return
+- Dropdown and floating window modes
+- Settings: notifications, Launch at Login, custom WezTerm path
 
 ## Requirements
 
