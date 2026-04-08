@@ -28,6 +28,10 @@ A macOS menu bar app that monitors running [Claude Code](https://docs.anthropic.
 - [WezTerm](https://wezfurlong.org/wezterm/) installed at `/Applications/WezTerm.app`
 - [Claude Code](https://docs.anthropic.com/en/docs/claude-code) running in WezTerm
 
+## Download
+
+Download the latest release from [GitHub Releases](https://github.com/giginet/CCMissionControl/releases/latest).
+
 ## Build
 
 ```bash
