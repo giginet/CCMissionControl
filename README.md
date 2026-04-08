@@ -1,8 +1,19 @@
 # CCMissionControl
 
+![](Documents/icon.png)
+
+[![macOS](https://img.shields.io/badge/macOS-26%2B-white?logo=apple&logoColor=white)](https://developer.apple.com/macos/)
+[![Swift](https://img.shields.io/badge/Swift-6.3-orange?logo=swift&logoColor=white)](https://swift.org/)
+[![WezTerm](https://img.shields.io/badge/WezTerm-required-purple?logo=wezterm&logoColor=white)](https://wezfurlong.org/wezterm/)
+[![CI](https://github.com/giginet/CCMissionControl/actions/workflows/test.yml/badge.svg)](https://github.com/giginet/CCMissionControl/actions/workflows/test.yml)
+[![License](https://img.shields.io/badge/License-Apache%202.0-green)](LICENSE)
+[![Release](https://img.shields.io/github/v/release/giginet/CCMissionControl)](https://github.com/giginet/CCMissionControl/releases/latest)
+
 A macOS menu bar app that monitors running [Claude Code](https://docs.anthropic.com/en/docs/claude-code) sessions in [WezTerm](https://wezfurlong.org/wezterm/).
 
 ## Features
+
+![](Documents/screenshot.png)
 
 - Detects Claude Code sessions by cross-referencing WezTerm panes with system processes
 - Shows running/idle status based on `caffeinate` child process detection
@@ -13,7 +24,7 @@ A macOS menu bar app that monitors running [Claude Code](https://docs.anthropic.
 
 ## Requirements
 
-- macOS 26.3+
+- macOS 26.0+
 - [WezTerm](https://wezfurlong.org/wezterm/) installed at `/Applications/WezTerm.app`
 - [Claude Code](https://docs.anthropic.com/en/docs/claude-code) running in WezTerm
 
