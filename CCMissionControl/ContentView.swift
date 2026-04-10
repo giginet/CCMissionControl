@@ -63,6 +63,10 @@ final class AgentListViewModel {
         UserDefaults.standard.object(forKey: "notificationsEnabled") as? Bool ?? true
     }
 
+    var notifyForeground: Bool {
+        UserDefaults.standard.bool(forKey: "notifyForeground")
+    }
+
     func applyResult(_ result: [Agent]) {
         // Clear override when WezTerm is foreground so scan's focused_pane_id takes effect.
         // Skip clearing for 5 seconds after click since activateTab briefly makes WezTerm active.
@@ -98,13 +102,14 @@ final class AgentListViewModel {
                 effectiveAgent = agent
             }
             let previousStatus = previousStatusByPaneID[effectiveAgent.paneID]
-            if previousStatus == .running && effectiveAgent.status == .idle
-                && !effectiveAgent.isActive
-            {
+            let becameIdle = previousStatus == .running && effectiveAgent.status == .idle
+            if becameIdle && !effectiveAgent.isActive {
                 unreadPaneIDs.insert(effectiveAgent.paneID)
-                if notificationsEnabled {
-                    notificationService.sendCompletionNotification(for: effectiveAgent)
-                }
+            }
+            if becameIdle && notificationsEnabled
+                && (!effectiveAgent.isActive || notifyForeground)
+            {
+                notificationService.sendCompletionNotification(for: effectiveAgent)
             }
             if effectiveAgent.isActive {
                 unreadPaneIDs.remove(effectiveAgent.paneID)

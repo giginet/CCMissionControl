@@ -10,6 +10,7 @@ struct SettingsView: View {
     @AppStorage("showInDock") private var showInDock = false
     @AppStorage("windowMode") private var windowMode = "dropdown"
     @AppStorage("notificationsEnabled") private var notificationsEnabled = true
+    @AppStorage("notifyForeground") private var notifyForeground = false
     @AppStorage("wezTermPath") private var wezTermPath = defaultWezTermPath
     @State private var authorizationStatus: UNAuthorizationStatus
     private let skipNotificationCheck: Bool
@@ -57,6 +58,14 @@ struct SettingsView: View {
                     }
                 }
                 Toggle("Enable Notifications", isOn: $notificationsEnabled)
+                if notificationsEnabled {
+                    Toggle("Notify for Active Pane", isOn: $notifyForeground)
+                    if notifyForeground {
+                        Text("Notifications will be sent even when you are viewing the pane.")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                }
                 if !notificationsEnabled {
                     Text("Notifications are disabled in app settings.")
                         .font(.caption)

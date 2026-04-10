@@ -67,7 +67,7 @@ final class FloatingPanelController {
 
         let panel = NSPanel(
             contentRect: NSRect(x: 0, y: 0, width: 480, height: 400),
-            styleMask: [.closable, .nonactivatingPanel, .fullSizeContentView],
+            styleMask: [.closable, .resizable, .nonactivatingPanel, .fullSizeContentView],
             backing: .buffered,
             defer: false
         )
@@ -78,6 +78,7 @@ final class FloatingPanelController {
         panel.contentView = contentView
         panel.isOpaque = false
         panel.backgroundColor = .windowBackgroundColor
+        panel.minSize = NSSize(width: 480, height: 200)
 
         self.panel = panel
         return panel
