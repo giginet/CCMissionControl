@@ -33,7 +33,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         panelController = FloatingPanelController {
             ContentView(viewModel: self.viewModel)
-                .frame(width: 480, height: 400)
+                .frame(width: 480)
         }
 
         viewModel.startScanning()

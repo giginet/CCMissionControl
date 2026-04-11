@@ -88,6 +88,10 @@ enum AgentScanner {
             executablePath: wezterm,
             arguments: ["cli", "activate-tab", "--tab-id", String(agent.tabID)]
         )
+        _ = try? await ShellExecutor.run(
+            executablePath: wezterm,
+            arguments: ["cli", "activate-pane", "--pane-id", String(agent.paneID)]
+        )
         _ = await MainActor.run {
             NSRunningApplication.runningApplications(withBundleIdentifier: "com.github.wez.wezterm")
                 .first?.activate()

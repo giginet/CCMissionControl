@@ -8,6 +8,7 @@ final class FloatingPanelController {
     init<Content: View>(@ViewBuilder content: () -> Content) {
         let hostingView = NSHostingView(rootView: content())
         hostingView.frame = NSRect(x: 0, y: 0, width: 480, height: 400)
+        hostingView.autoresizingMask = [.width, .height]
         self.contentView = hostingView
     }
 
