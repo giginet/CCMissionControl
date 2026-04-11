@@ -37,6 +37,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
 
         viewModel.startScanning()
+
+        let windowMode = UserDefaults.standard.string(forKey: "windowMode") ?? "dropdown"
+        if windowMode == "floating" {
+            panelController.show(relativeTo: statusItem.button)
+        }
         updateStatusItemLabel()
         updateActivationPolicy()
 
