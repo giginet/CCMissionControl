@@ -8,7 +8,7 @@ private let defaultWezTermPath = "/Applications/WezTerm.app/Contents/MacOS/wezte
 
 struct SettingsView: View {
     @AppStorage("showInDock") private var showInDock = false
-    @AppStorage("windowMode") private var windowMode = "dropdown"
+    @AppStorage("windowMode") private var windowMode = WindowMode.dropdown.rawValue
     @AppStorage("notificationsEnabled") private var notificationsEnabled = true
     @AppStorage("notifyForeground") private var notifyForeground = false
     @AppStorage("wezTermPath") private var wezTermPath = defaultWezTermPath
@@ -29,8 +29,8 @@ struct SettingsView: View {
         Form {
             Section("Appearance") {
                 Picker("Window Mode", selection: $windowMode) {
-                    Text("Dropdown").tag("dropdown")
-                    Text("Floating").tag("floating")
+                    Text("Dropdown").tag(WindowMode.dropdown.rawValue)
+                    Text("Floating").tag(WindowMode.floating.rawValue)
                 }
                 .pickerStyle(.segmented)
                 Toggle("Launch at Login", isOn: launchAtLoginBinding)

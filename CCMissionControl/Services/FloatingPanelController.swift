@@ -28,7 +28,7 @@ final class FloatingPanelController {
         let panel = makeOrReusePanel()
 
         let isFloating =
-            (UserDefaults.standard.string(forKey: "windowMode") ?? "dropdown") == "floating"
+            WindowMode.current == .floating
 
         if isFloating {
             panel.level = .floating

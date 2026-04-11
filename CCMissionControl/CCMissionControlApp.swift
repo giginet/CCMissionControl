@@ -33,13 +33,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         panelController = FloatingPanelController {
             ContentView(viewModel: self.viewModel)
-                .frame(width: 480)
+                .frame(width: 480, height: 400)
         }
 
         viewModel.startScanning()
 
-        let windowMode = UserDefaults.standard.string(forKey: "windowMode") ?? "dropdown"
-        if windowMode == "floating" {
+        if WindowMode.current == .floating {
             panelController.show(relativeTo: statusItem.button)
         }
         updateStatusItemLabel()
