@@ -2,33 +2,36 @@
   "fill-specializations" : [
     {
       "value" : {
-        "solid" : "display-p3:0.85746,0.40916,0.26525,1.00000"
+        "linear-gradient" : [
+          "display-p3:0.92000,0.58000,0.40000,1.00000",
+          "display-p3:0.82000,0.42000,0.26000,1.00000"
+        ],
+        "orientation" : {
+          "start" : {
+            "x" : 0.5,
+            "y" : 0
+          },
+          "stop" : {
+            "x" : 0.5,
+            "y" : 1
+          }
+        }
       }
     },
     {
       "appearance" : "dark",
-      "value" : {
-        "solid" : "display-p3:0.72069,0.37390,0.26588,1.00000"
-      }
+      "value" : "system-dark"
     }
   ],
   "groups" : [
     {
-      "blur-material" : null,
       "layers" : [
         {
-          "blend-mode-specializations" : [
-            {
-              "appearance" : "dark",
-              "value" : "darken"
-            }
-          ],
           "fill" : {
-            "solid" : "extended-srgb:1.00000,0.80000,0.00000,1.00000"
+            "solid" : "extended-srgb:1.00000,0.86000,0.42000,1.00000"
           },
           "image-name" : "Bolt.svg",
           "name" : "Bolt",
-          "opacity" : 0.8,
           "position" : {
             "scale" : 7,
             "translation-in-points" : [
@@ -38,16 +41,10 @@
           }
         },
         {
-          "blend-mode-specializations" : [
-            {
-              "appearance" : "dark",
-              "value" : "darken"
-            }
-          ],
           "fill" : {
             "linear-gradient" : [
-              "extended-srgb:0.38039,0.33333,0.96078,1.00000",
-              "extended-srgb:0.79608,0.18824,0.87843,1.00000"
+              "extended-srgb:0.36000,0.32000,0.92000,1.00000",
+              "extended-srgb:0.62000,0.30000,0.92000,1.00000"
             ],
             "orientation" : {
               "start" : {
