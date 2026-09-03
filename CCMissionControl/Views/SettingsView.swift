@@ -9,6 +9,8 @@ private let defaultWezTermPath = "/Applications/WezTerm.app/Contents/MacOS/wezte
 struct SettingsView: View {
     @AppStorage("showInDock") private var showInDock = false
     @AppStorage("windowMode") private var windowMode = WindowMode.dropdown.rawValue
+    @AppStorage(FollowPanelWidth.key) private var followPanelWidth = Double(
+        FollowPanelWidth.defaultValue)
     @AppStorage("notificationsEnabled") private var notificationsEnabled = true
     @AppStorage("notifyForeground") private var notifyForeground = false
     @AppStorage("wezTermPath") private var wezTermPath = defaultWezTermPath
@@ -31,8 +33,20 @@ struct SettingsView: View {
                 Picker("Window Mode", selection: $windowMode) {
                     Text("Dropdown").tag(WindowMode.dropdown.rawValue)
                     Text("Floating").tag(WindowMode.floating.rawValue)
+                    Text("Follow WezTerm").tag(WindowMode.followWezTerm.rawValue)
                 }
                 .pickerStyle(.segmented)
+                if windowMode == WindowMode.followWezTerm.rawValue {
+                    Text(
+                        """
+                        Attaches to the left edge of the frontmost WezTerm window \
+                        with the same height. Does not follow while WezTerm is in full screen.
+                        """
+                    )
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    followPanelWidthControl
+                }
                 Toggle("Launch at Login", isOn: launchAtLoginBinding)
                 Toggle("Show in Dock", isOn: $showInDock)
             }
@@ -104,6 +118,26 @@ struct SettingsView: View {
             guard !skipNotificationCheck else { return }
             authorizationStatus = await SystemNotificationService.shared
                 .getAuthorizationStatus()
+        }
+    }
+
+    private var followPanelWidthControl: some View {
+        let range = FollowPanelWidth.range
+        return HStack(spacing: 8) {
+            Text("Panel Width")
+            // No `step:` here: on macOS it draws tick marks under the track.
+            // Round to 10 pt in the binding instead.
+            Slider(
+                value: Binding(
+                    get: { followPanelWidth },
+                    set: { followPanelWidth = (($0 / 10).rounded()) * 10 }
+                ),
+                in: Double(range.lowerBound)...Double(range.upperBound)
+            )
+            Text("\(Int(followPanelWidth)) pt")
+                .font(.body.monospacedDigit())
+                .foregroundStyle(.secondary)
+                .frame(width: 56, alignment: .trailing)
         }
     }
 

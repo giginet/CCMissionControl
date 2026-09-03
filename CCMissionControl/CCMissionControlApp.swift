@@ -18,6 +18,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var panelController: FloatingPanelController!
     private let viewModel = AgentListViewModel()
     private var cancellable: AnyCancellable?
+    private var lastWindowMode: WindowMode = .dropdown
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         SystemNotificationService.shared.setUp()
@@ -33,14 +34,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         panelController = FloatingPanelController {
             ContentView(viewModel: self.viewModel)
-                .frame(width: 480, height: 400)
+                .frame(minWidth: 320, minHeight: 200)
         }
 
         viewModel.startScanning()
 
-        if WindowMode.current == .floating {
+        if WindowMode.current != .dropdown {
             panelController.show(relativeTo: statusItem.button)
         }
+        lastWindowMode = WindowMode.current
         updateStatusItemLabel()
         updateActivationPolicy()
 
@@ -48,6 +50,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             .sink { [weak self] _ in
                 self?.updateStatusItemLabel()
                 self?.updateActivationPolicy()
+                self?.applyWindowModeIfChanged()
             }
 
         Timer.scheduledTimer(withTimeInterval: 2, repeats: true) { [weak self] _ in
@@ -58,6 +61,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private func updateActivationPolicy() {
         let showInDock = UserDefaults.standard.bool(forKey: "showInDock")
         NSApplication.shared.setActivationPolicy(showInDock ? .regular : .accessory)
+    }
+
+    private func applyWindowModeIfChanged() {
+        let mode = WindowMode.current
+        guard mode != lastWindowMode else { return }
+        lastWindowMode = mode
+        panelController.applyCurrentMode(relativeTo: statusItem.button)
     }
 
     @objc private func statusItemClicked() {
