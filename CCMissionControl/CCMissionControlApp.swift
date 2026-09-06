@@ -97,7 +97,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             }
         }
 
-        let iconName = runningCount > 0 ? "bolt.fill" : "powersleep"
+        let hasWaiting = viewModel.agents.contains { $0.status == .waiting }
+        let hasUnknown = viewModel.agents.contains { $0.status == .unknown }
+        let iconName =
+            hasWaiting
+            ? "exclamationmark.circle"
+            : (runningCount > 0 ? "bolt.fill" : (hasUnknown ? "questionmark.circle" : "powersleep"))
         if let iconImage = NSImage(systemSymbolName: iconName, accessibilityDescription: nil)?
             .withSymbolConfiguration(config)
         {
@@ -106,7 +111,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             attachment.append(NSAttributedString(attachment: iconAttachment))
         }
 
-        let count = runningCount > 0 ? runningCount : totalCount
+        let count = runningCount > 0 && !hasWaiting ? runningCount : totalCount
         let countString = NSAttributedString(
             string: " \(count)",
             attributes: [.font: NSFont.monospacedDigitSystemFont(ofSize: 12, weight: .regular)]

@@ -16,48 +16,68 @@ enum ScanError: LocalizedError {
 }
 
 enum AgentScanner {
+    private nonisolated static let detectors: [any AgentDetector] = [
+        ClaudeCodeDetector(), CodexDetector(),
+    ]
+
     nonisolated static func scan() async throws -> [Agent] {
         async let panesResult = fetchPanes()
-        async let processResult = fetchProcessTree()
+        async let processResult = fetchProcessTree(detectors: detectors)
         async let focusedResult = fetchFocusedPaneID()
 
         let panes = try await panesResult
         let tree = try await processResult
         let focusedPaneID = try await focusedResult
 
-        let claudePIDs = tree.claudePIDs
-        var claudeStatus: [Int: Agent.Status] = [:]
-        for cpid in claudePIDs {
-            let children = tree.children(of: cpid)
-            let hasCaffeinate = children.contains { $0.commandName == "caffeinate" }
-            claudeStatus[cpid] = hasCaffeinate ? .running : .idle
-        }
+        return agents(panes: panes, tree: tree, focusedPaneID: focusedPaneID, detectors: detectors)
+    }
 
+    nonisolated static func agents(
+        panes: [WezTermPane], tree: ProcessTree, focusedPaneID: Int?,
+        detectors: [any AgentDetector] = AgentScanner.detectors
+    ) -> [Agent] {
+        let detected = tree.entries.compactMap {
+            entry -> (detection: AgentDetection, detector: any AgentDetector)? in
+            for detector in detectors {
+                if let detection = detector.detect(entry, in: tree) {
+                    return (detection, detector)
+                }
+            }
+            return nil
+        }
+        let byPID = Dictionary(uniqueKeysWithValues: detected.map { ($0.detection.pid, $0) })
+        let agentPIDs = Set(byPID.keys)
         var seen = Set<Int>()
         var agents: [Agent] = []
 
         for pane in panes {
             let tty = normalizeTTY(pane.ttyName)
-            let entriesOnTTY = tree.entries(onTTY: tty)
-
-            var foundClaudePID: Int?
-            for entry in entriesOnTTY {
-                if let cpid = tree.ancestorClaude(of: entry.pid, claudePIDs: claudePIDs) {
-                    foundClaudePID = cpid
-                    break
-                }
+            let candidates = Set(
+                tree.entries(onTTY: tty).compactMap {
+                    tree.ancestor(of: $0.pid, matching: agentPIDs)
+                })
+            // Keep one row per pane. Prefer the outer session over nested tool invocations,
+            // with PID order as a stable tie-breaker for unrelated background sessions.
+            let roots = candidates.filter { pid in
+                guard let entry = tree.entry(for: pid) else { return false }
+                return tree.ancestor(of: entry.ppid, matching: candidates) == nil
             }
+            guard let pid = roots.min(), let match = byPID[pid],
+                seen.insert(pid).inserted
+            else { continue }
 
-            guard let cpid = foundClaudePID, !seen.contains(cpid) else { continue }
-            seen.insert(cpid)
-
+            let detection = match.detection
+            let status = match.detector.status(for: detection, pane: pane)
             let cwdPath = parseCWD(pane.cwd)
             let project = (cwdPath as NSString).lastPathComponent
             let displayCWD = cwdPath.replacingOccurrences(
                 of: NSHomeDirectory(),
                 with: "~"
             )
-            let cleanTitle = cleanUpTitle(pane.title)
+            let cleanTitle =
+                detection.kind == .codex
+                ? pane.title.trimmingCharacters(in: .whitespacesAndNewlines)
+                : cleanUpTitle(pane.title)
 
             agents.append(
                 Agent(
@@ -67,16 +87,19 @@ enum AgentScanner {
                     project: project,
                     cwd: displayCWD,
                     title: cleanTitle,
-                    status: claudeStatus[cpid] ?? .idle,
-                    isActive: pane.paneId == focusedPaneID
+                    status: status,
+                    isActive: pane.paneId == focusedPaneID,
+                    kind: detection.kind,
+                    processID: pid
                 ))
         }
 
         agents.sort { a, b in
-            if a.status != b.status {
-                return a.status == .running
+            if a.status.sortOrder != b.status.sortOrder {
+                return a.status.sortOrder < b.status.sortOrder
             }
-            return a.workspace < b.workspace
+            if a.workspace != b.workspace { return a.workspace < b.workspace }
+            return a.paneID < b.paneID
         }
 
         return agents
@@ -145,12 +168,20 @@ enum AgentScanner {
         }
     }
 
-    private nonisolated static func fetchProcessTree() async throws -> ProcessTree {
+    private nonisolated static func fetchProcessTree(
+        detectors: [any AgentDetector]
+    ) async throws -> ProcessTree {
         let output = try await ShellExecutor.run(
             executablePath: "/bin/ps",
             arguments: ["-eo", "pid,ppid,tty,comm"]
         )
-        return ProcessTree(parsing: output)
+        let snapshot = ProcessTree(parsing: output)
+        var argumentsByPID: [Int: [String]] = [:]
+        for entry in snapshot.entries
+        where detectors.contains(where: { $0.requiresArguments(for: entry) }) {
+            argumentsByPID[entry.pid] = ProcessArguments.read(pid: entry.pid)
+        }
+        return ProcessTree(parsing: output, argumentsByPID: argumentsByPID)
     }
 
     private nonisolated static func normalizeTTY(_ tty: String) -> String {
@@ -178,76 +209,5 @@ enum AgentScanner {
             result = String(result.unicodeScalars.dropFirst())
         }
         return result.trimmingCharacters(in: .whitespaces)
-    }
-}
-
-nonisolated struct ProcessTree: Sendable {
-    private let entriesByPID: [Int: ProcessEntry]
-    private let childrenByPPID: [Int: [ProcessEntry]]
-    private let entriesByTTY: [String: [ProcessEntry]]
-    let claudePIDs: Set<Int>
-
-    init(parsing output: String) {
-        var byPID: [Int: ProcessEntry] = [:]
-        var byPPID: [Int: [ProcessEntry]] = [:]
-        var byTTY: [String: [ProcessEntry]] = [:]
-        var claudes: Set<Int> = []
-
-        let lines = output.components(separatedBy: "\n").dropFirst()  // skip header
-        for line in lines {
-            let trimmed = line.trimmingCharacters(in: .whitespaces)
-            guard !trimmed.isEmpty else { continue }
-
-            let parts = trimmed.split(separator: " ", maxSplits: 3, omittingEmptySubsequences: true)
-                .map(String.init)
-            guard parts.count >= 4,
-                let pid = Int(parts[0]),
-                let ppid = Int(parts[1])
-            else { continue }
-
-            let entry = ProcessEntry(
-                pid: pid,
-                ppid: ppid,
-                tty: parts[2],
-                command: parts[3].trimmingCharacters(in: .whitespaces)
-            )
-
-            byPID[pid] = entry
-            byPPID[ppid, default: []].append(entry)
-            if entry.tty != "??" {
-                byTTY[entry.tty, default: []].append(entry)
-            }
-
-            if entry.commandName.localizedCaseInsensitiveContains("claude") {
-                claudes.insert(pid)
-            }
-        }
-
-        self.entriesByPID = byPID
-        self.childrenByPPID = byPPID
-        self.entriesByTTY = byTTY
-        self.claudePIDs = claudes
-    }
-
-    func children(of pid: Int) -> [ProcessEntry] {
-        childrenByPPID[pid] ?? []
-    }
-
-    func entries(onTTY tty: String) -> [ProcessEntry] {
-        entriesByTTY[tty] ?? []
-    }
-
-    func ancestorClaude(of pid: Int, claudePIDs: Set<Int>) -> Int? {
-        var current = pid
-        var visited = Set<Int>()
-        while let entry = entriesByPID[current] {
-            if claudePIDs.contains(current) {
-                return current
-            }
-            if visited.contains(current) { break }
-            visited.insert(current)
-            current = entry.ppid
-        }
-        return nil
     }
 }

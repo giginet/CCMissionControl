@@ -174,3 +174,54 @@ struct AgentListViewModelTests {
         #expect(mock.notifiedAgents.isEmpty)
     }
 }
+
+@MainActor
+struct AgentSessionTransitionTests {
+    private func agent(_ pid: Int, _ kind: AgentKind, _ status: Agent.Status) -> Agent {
+        Agent(
+            paneID: 1, tabID: 1, workspace: "default", project: "test", cwd: "/tmp", title: "",
+            status: status, isActive: false, kind: kind, processID: pid)
+    }
+
+    @Test func replacingProcessOrKindDoesNotNotify() {
+        let mock = MockNotificationService()
+        let vm = AgentListViewModel(notificationService: mock)
+        vm.applyResult([agent(1, .claudeCode, .running)])
+        vm.applyResult([agent(2, .claudeCode, .idle)])
+        vm.applyResult([agent(2, .claudeCode, .running)])
+        vm.applyResult([agent(2, .codex, .idle)])
+        #expect(mock.notifiedAgents.isEmpty)
+        #expect(vm.unreadPaneIDs.isEmpty)
+    }
+
+    @Test func unknownAndDisappearanceDoNotNotify() {
+        let mock = MockNotificationService()
+        let vm = AgentListViewModel(notificationService: mock)
+        vm.applyResult([agent(1, .codex, .running)])
+        vm.applyResult([agent(1, .codex, .unknown)])
+        vm.applyResult([agent(1, .codex, .idle)])
+        vm.applyResult([agent(1, .claudeCode, .running)])
+        vm.applyResult([])
+        vm.applyResult([agent(1, .claudeCode, .idle)])
+        #expect(mock.notifiedAgents.isEmpty)
+        #expect(vm.unreadPaneIDs.isEmpty)
+    }
+
+    @Test func focusOverridePreservesIdentityAndRemovedPanesClearBadges() {
+        let vm = AgentListViewModel(notificationService: MockNotificationService())
+        vm.applyResult([agent(1, .codex, .unknown)])
+        vm.setActive(paneID: 1)
+        #expect(vm.agents.first?.kind == .codex)
+        #expect(vm.agents.first?.processID == 1)
+        vm.applyResult([agent(1, .codex, .unknown)])
+        #expect(vm.agents.first?.processID == 1)
+        #expect(vm.agents.first?.isActive == true)
+
+        let other = AgentListViewModel(notificationService: MockNotificationService())
+        other.applyResult([agent(2, .claudeCode, .running)])
+        other.applyResult([agent(2, .claudeCode, .idle)])
+        #expect(other.unreadPaneIDs == [1])
+        other.applyResult([])
+        #expect(other.unreadPaneIDs.isEmpty)
+    }
+}
