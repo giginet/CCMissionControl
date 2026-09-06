@@ -5,11 +5,28 @@ struct AgentRowView: View {
     var isUnread: Bool = false
     var isActive: Bool = false
 
+    private var agentColor: Color {
+        switch agent.kind {
+        case .claudeCode: .orange
+        case .codex: .blue
+        }
+    }
+
     var body: some View {
         HStack(spacing: 12) {
             StatusBadge(status: agent.status)
             VStack(alignment: .leading, spacing: 2) {
                 HStack(alignment: .firstTextBaseline) {
+                    Text(agent.kind.displayName)
+                        .font(.caption.weight(.medium))
+                        .foregroundStyle(agentColor)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 2)
+                        .background(agentColor.opacity(0.12), in: Capsule())
+                        .overlay {
+                            Capsule().strokeBorder(agentColor.opacity(0.4), lineWidth: 1)
+                        }
+                        .fixedSize()
                     Text(agent.project)
                         .font(.headline)
                     if isUnread {
@@ -24,16 +41,12 @@ struct AgentRowView: View {
                     }
                     Spacer()
                     Text(agent.status.rawValue)
+                        .help(agent.status.helpText)
                         .font(.caption)
                         .padding(.horizontal, 6)
                         .padding(.vertical, 2)
-                        .background(
-                            agent.status == .running
-                                ? Color.green.opacity(0.15)
-                                : Color.gray.opacity(0.15),
-                            in: Capsule()
-                        )
-                        .foregroundStyle(agent.status == .running ? .green : .secondary)
+                        .background(agent.status.color.opacity(0.15), in: Capsule())
+                        .foregroundStyle(agent.status.color)
                 }
                 Text(agent.cwd)
                     .font(.caption)

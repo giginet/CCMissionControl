@@ -7,7 +7,7 @@ final class AgentListViewModel {
     private(set) var isScanning = false
     private(set) var unreadPaneIDs: Set<Int> = []
     let notificationService: any NotificationServiceProtocol
-    private var previousStatusByPaneID: [Int: Agent.Status] = [:]
+    private var previousAgentsByPaneID: [Int: Agent] = [:]
     private var overriddenActivePaneID: Int?
     private var overrideSetAt: Date?
     private var timer: Timer?
@@ -32,16 +32,9 @@ final class AgentListViewModel {
         overriddenActivePaneID = paneID
         overrideSetAt = Date()
         agents = agents.map { agent in
-            Agent(
-                paneID: agent.paneID,
-                tabID: agent.tabID,
-                workspace: agent.workspace,
-                project: agent.project,
-                cwd: agent.cwd,
-                title: agent.title,
-                status: agent.status,
-                isActive: agent.paneID == paneID
-            )
+            var updated = agent
+            updated.isActive = agent.paneID == paneID
+            return updated
         }
     }
 
@@ -86,23 +79,15 @@ final class AgentListViewModel {
 
         var updatedAgents: [Agent] = []
         for agent in result {
-            let effectiveAgent: Agent
+            var effectiveAgent = agent
             if let overrideID = overriddenActivePaneID {
-                effectiveAgent = Agent(
-                    paneID: agent.paneID,
-                    tabID: agent.tabID,
-                    workspace: agent.workspace,
-                    project: agent.project,
-                    cwd: agent.cwd,
-                    title: agent.title,
-                    status: agent.status,
-                    isActive: agent.paneID == overrideID
-                )
-            } else {
-                effectiveAgent = agent
+                effectiveAgent.isActive = agent.paneID == overrideID
             }
-            let previousStatus = previousStatusByPaneID[effectiveAgent.paneID]
-            let becameIdle = previousStatus == .running && effectiveAgent.status == .idle
+            let previous = previousAgentsByPaneID[effectiveAgent.paneID]
+            let sameSession = previous?.sessionIdentity == effectiveAgent.sessionIdentity
+            if !sameSession { unreadPaneIDs.remove(effectiveAgent.paneID) }
+            let becameIdle =
+                sameSession && previous?.status == .running && effectiveAgent.status == .idle
             if becameIdle && !effectiveAgent.isActive {
                 unreadPaneIDs.insert(effectiveAgent.paneID)
             }
@@ -114,9 +99,11 @@ final class AgentListViewModel {
             if effectiveAgent.isActive {
                 unreadPaneIDs.remove(effectiveAgent.paneID)
             }
-            previousStatusByPaneID[effectiveAgent.paneID] = effectiveAgent.status
             updatedAgents.append(effectiveAgent)
         }
+        previousAgentsByPaneID = Dictionary(
+            uniqueKeysWithValues: updatedAgents.map { ($0.paneID, $0) })
+        unreadPaneIDs.formIntersection(previousAgentsByPaneID.keys)
         self.agents = updatedAgents
         self.error = nil
     }
@@ -136,9 +123,9 @@ struct ContentView: View {
                 }
             } else if viewModel.agents.isEmpty {
                 ContentUnavailableView(
-                    "No Claude Code Sessions",
+                    "No Agent Sessions",
                     systemImage: "terminal",
-                    description: Text("No active Claude Code sessions found in WezTerm.")
+                    description: Text("No Claude Code or Codex sessions found in WezTerm.")
                 )
             } else {
                 List(viewModel.agents) { agent in

@@ -31,12 +31,12 @@ struct ProcessTreeParsingTests {
         let tree = ProcessTree(parsing: Self.realisticPSOutput)
         // PID=1 (launchd) has TTY "??" so it won't be in entriesByTTY.
         // Verify the header line was skipped by confirming PID 0 is not in claudePIDs.
-        #expect(!tree.claudePIDs.contains(0))
+        #expect(!claudePIDs(in: tree).contains(0))
     }
 
     @Test func detectsClaudePIDs() {
         let tree = ProcessTree(parsing: Self.realisticPSOutput)
-        #expect(tree.claudePIDs == [15494, 22257])
+        #expect(claudePIDs(in: tree) == [15494, 22257])
     }
 
     @Test func commandNameTrimsLeadingWhitespace() {
@@ -55,7 +55,7 @@ struct ProcessTreeParsingTests {
 
     @Test func handlesEmptyOutput() {
         let tree = ProcessTree(parsing: "  PID  PPID TTY      COMM\n")
-        #expect(tree.claudePIDs.isEmpty)
+        #expect(claudePIDs(in: tree).isEmpty)
     }
 
     @Test func handlesFullPathClaudeCommand() {
@@ -64,7 +64,7 @@ struct ProcessTreeParsingTests {
               100    99 ttys001  /usr/local/bin/claude
             """
         let tree = ProcessTree(parsing: output)
-        #expect(tree.claudePIDs == [100])
+        #expect(claudePIDs(in: tree) == [100])
     }
 }
 
@@ -82,32 +82,32 @@ struct AncestorDetectionTests {
 
     @Test func findsDirectClaudeProcess() {
         let tree = ProcessTree(parsing: Self.psOutput)
-        let result = tree.ancestorClaude(of: 15494, claudePIDs: tree.claudePIDs)
+        let result = tree.ancestor(of: 15494, matching: claudePIDs(in: tree))
         #expect(result == 15494)
     }
 
     @Test func findsClaudeAsAncestorOfChild() {
         let tree = ProcessTree(parsing: Self.psOutput)
-        let result = tree.ancestorClaude(of: 15511, claudePIDs: tree.claudePIDs)
+        let result = tree.ancestor(of: 15511, matching: claudePIDs(in: tree))
         #expect(result == 15494)
     }
 
     @Test func findsClaudeAsAncestorOfGrandchild() {
         let tree = ProcessTree(parsing: Self.psOutput)
-        let result = tree.ancestorClaude(of: 15655, claudePIDs: tree.claudePIDs)
+        let result = tree.ancestor(of: 15655, matching: claudePIDs(in: tree))
         #expect(result == 15494)
     }
 
     @Test func returnsNilForNonClaudeAncestry() {
         let tree = ProcessTree(parsing: Self.psOutput)
         // zsh (15096) has parent login (15095), not a descendant of claude
-        let result = tree.ancestorClaude(of: 15096, claudePIDs: tree.claudePIDs)
+        let result = tree.ancestor(of: 15096, matching: claudePIDs(in: tree))
         #expect(result == nil)
     }
 
     @Test func returnsNilForUnknownPID() {
         let tree = ProcessTree(parsing: Self.psOutput)
-        let result = tree.ancestorClaude(of: 99999, claudePIDs: tree.claudePIDs)
+        let result = tree.ancestor(of: 99999, matching: claudePIDs(in: tree))
         #expect(result == nil)
     }
 
@@ -119,7 +119,7 @@ struct AncestorDetectionTests {
               200   100 ttys000  /bin/zsh
             """
         let tree = ProcessTree(parsing: output)
-        let result = tree.ancestorClaude(of: 100, claudePIDs: [])
+        let result = tree.ancestor(of: 100, matching: [])
         #expect(result == nil)
     }
 }
@@ -165,4 +165,8 @@ struct StatusDetectionTests {
         let hasCaffeinate = children.contains { $0.commandName == "caffeinate" }
         #expect(!hasCaffeinate)
     }
+}
+
+private nonisolated func claudePIDs(in tree: ProcessTree) -> Set<Int> {
+    Set(tree.entries.compactMap { ClaudeCodeDetector().detect($0, in: tree)?.pid })
 }
