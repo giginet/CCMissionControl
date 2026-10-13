@@ -36,7 +36,7 @@ A macOS menu bar app that monitors [Claude Code](https://docs.anthropic.com/en/d
 | Claude Code | Orange `Claude` | Supported | Running / idle | Supported |
 | Codex CLI | Blue `Codex` | Supported | Running / idle / waiting, inferred from terminal title | On a detected running → idle transition |
 
-Both agents can be listed together across WezTerm panes. Codex support covers interactive CLI sessions, including `resume` and `fork`. Non-interactive commands, server processes, and helper processes are excluded. Desktop/IDE sessions without a matching WezTerm TTY are not listed.
+Both agents can be listed together across WezTerm panes. Codex support covers interactive CLI sessions, including `resume`, `fork`, `--worktree`, and `--no-daemon`. Non-interactive commands, server processes, and helper processes are excluded. Desktop/IDE sessions without a matching WezTerm TTY are not listed.
 
 ## Download
 
@@ -60,7 +60,7 @@ It matches WezTerm panes to agent processes by normalizing TTY names and walking
 
 Claude Code and Codex implement a shared `AgentDetector` interface. Codex detection matches the native `codex` executable and reads its argument vector using macOS `KERN_PROCARGS2` to exclude non-interactive commands and servers. npm's Node launcher is represented by its native Codex child. If arguments cannot be read, or an option is unrecognized, that candidate is skipped. One outer agent session is shown per pane; unrelated sessions on the same TTY use the lowest PID as a stable tie-breaker.
 
-Codex activity is inferred from the raw WezTerm pane title, using title formats from Codex CLI 0.153.4:
+Codex activity is inferred from the raw WezTerm pane title, including formats observed with Codex CLI 0.153.4 and 0.160.0:
 
 | Leading title item | Activity |
 |--------------------|----------|
@@ -68,9 +68,10 @@ Codex activity is inferred from the raw WezTerm pane title, using title formats 
 | `Ready` | `idle` |
 | `[ ! ] Action Required` or `[ . ] Action Required` | `waiting` (approval or input needed) |
 | Plain project name matching the pane’s working directory name | `idle` (default title format) |
+| `Thread title | project` with a matching project name | `idle` |
 | Other unrecognized titles | `unknown` |
 
-Text status items must be first and either stand alone or be followed by ` | ` and the other title items. Title parsing is a heuristic: custom titles, terminal overrides, and future Codex versions can make status unavailable or inaccurate. A plain title is treated as idle only when it matches the working directory name of a confirmed Codex pane. A custom title that always shows only the project name can therefore be misclassified; use an explicit status title for clearer detection.
+Text status items must be first and either stand alone or be followed by ` | ` and the other title items. Title parsing is a heuristic: custom titles, terminal overrides, and future Codex versions can make status unavailable or inaccurate. Titles without an activity marker are treated as idle only when the project item matches the working directory name of a confirmed Codex pane, either alone or after a nonempty thread title. Codex's 24-character project abbreviation (21 characters followed by `...`) is also supported. A custom title that always shows a matching project item can therefore be misclassified; use an explicit status title for clearer detection.
 
 ### Codex title configuration
 
@@ -81,7 +82,7 @@ For explicit idle and running status, add or update this setting in your Codex `
 terminal_title = ["status", "project"]
 ```
 
-Merge this into an existing `[tui]` section if present. CCMissionControl does not change your Codex configuration. Codex's default `["spinner", "project"]` title is supported without configuration when the project title matches the pane’s working directory name. If Codex uses a different project name (for example, a repository root rather than the current subdirectory), the plain title remains `unknown`; the explicit status setting avoids this ambiguity. See the [official title configuration example](https://learn.chatgpt.com/docs/config-file/config-sample).
+Merge this into an existing `[tui]` section if present. CCMissionControl does not change your Codex configuration. Spinner/project titles, with or without a thread title, are supported without configuration when the project item matches the pane’s working directory name. If Codex uses a different project name (for example, a repository root rather than the current subdirectory), titles without an activity marker remain `unknown`; the explicit status setting avoids this ambiguity. See the [official title configuration example](https://learn.chatgpt.com/docs/config-file/config-sample).
 
 Only a directly observed `running` → `idle` transition for the same session produces a completion notification. Entering `waiting` or `unknown`, or moving from `waiting` directly to `idle`, does not. Two-second polling may miss short turns. Hooks and App Server state integration are not included.
 

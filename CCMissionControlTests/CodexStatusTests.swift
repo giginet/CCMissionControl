@@ -42,6 +42,7 @@ struct CodexStatusTests {
         for (title, expected) in [
             ("⠸ project", Agent.Status.running), ("Ready | project", .idle),
             ("[ ! ] Action Required | project", .waiting), ("project", .idle),
+            ("⠸ Fix build | project", .running), ("Fix build | project", .idle),
         ] {
             let agents = AgentScanner.agents(
                 panes: [pane(1, title), pane(2, "⠸ Claude")], tree: tree, focusedPaneID: 1)
@@ -57,15 +58,46 @@ struct CodexStatusTests {
             ("file:///Users/test/work/voxkhronos", "voxkhronos", Agent.Status.idle),
             ("/Users/test/work/voxkhronos", "voxkhronos", .idle),
             ("file:///tmp/my%20project", "my project", .idle),
+            ("file:///tmp/Scipio/", "CIを26以上に更新し27での実行を追加 | Scipio", .idle),
+            ("file:///tmp/project", "Fix build | project", .idle),
+            ("file:///tmp/project", "Fix build | add tests | project", .idle),
+            ("file:///tmp/project", "  Fix build | project\n", .idle),
+            ("file:///tmp/project", "Fix build | another-project", .unknown),
+            ("file:///tmp/project", "Fix build | project | extra", .unknown),
+            ("file:///tmp/project", "Fix build | proj...", .unknown),
+            ("file:///tmp/project", " | project", .unknown),
+            ("file:///tmp/project", "project | Ready", .unknown),
             ("file:///tmp/project", "zsh", .unknown),
             ("file:///tmp/project", "different project", .unknown),
             ("", "", .unknown),
             ("file:///tmp/project", "⠸ project", .running),
             ("file:///tmp/project", "[ ! ] Action Required | project", .waiting),
+            ("file:///tmp/project", "⠸ Fix build | project", .running),
+            ("file:///tmp/project", "[ ! ] Action Required | Fix build | project", .waiting),
         ] {
             let pane = WezTermPane(
                 paneId: 1, tabId: 1, workspace: "default", title: title,
                 cwd: cwd, ttyName: "/dev/ttys001", isActive: false)
+            #expect(detector.status(for: detection, pane: pane) == expected)
+        }
+    }
+
+    @Test func abbreviatedProjectTitlesMustMatchPaneDirectory() {
+        let detector = CodexDetector()
+        let detection = AgentDetection(pid: 100, kind: .codex, status: .unknown)
+        for (title, expected) in [
+            ("long-project-name-for...", Agent.Status.idle),
+            ("Fix build | long-project-name-for...", .idle),
+            ("Fix build | long-project-name-for-title-tests", .idle),
+            ("⠸ Fix build | long-project-name-for...", .running),
+            ("[ . ] Action Required | Fix build | long-project-name-for...", .waiting),
+            ("Fix build | long-project-name-...", .unknown),
+            ("Fix build | another-project-nam...", .unknown),
+        ] {
+            let pane = WezTermPane(
+                paneId: 1, tabId: 1, workspace: "default", title: title,
+                cwd: "file:///tmp/long-project-name-for-title-tests/",
+                ttyName: "/dev/ttys001", isActive: false)
             #expect(detector.status(for: detection, pane: pane) == expected)
         }
     }
@@ -126,6 +158,33 @@ struct CodexNotificationPipelineTests {
         let vm = AgentListViewModel(notificationService: mock)
         for title in ["⠸ project", "project"] {
             vm.applyResult(scan(title: title, focusedPaneID: 1))
+        }
+        #expect(mock.notifiedAgents.isEmpty)
+        #expect(vm.unreadPaneIDs.isEmpty)
+    }
+
+    @Test func threadTitlesProduceOneCompletionNotification() {
+        let mock = MockNotificationService()
+        let vm = AgentListViewModel(notificationService: mock)
+        for title in [
+            "⠸ Fix build | project", "⠦ Fix build | project", "Fix build | project",
+            "Fix build | project",
+        ] {
+            vm.applyResult(scan(title: title, focusedPaneID: 2))
+        }
+        #expect(mock.notifiedAgents.count == 1)
+        #expect(vm.unreadPaneIDs == [1])
+    }
+
+    @Test func threadTitlesDoNotNotifyAfterWaitingOrUnknown() {
+        let mock = MockNotificationService()
+        let vm = AgentListViewModel(notificationService: mock)
+        for title in [
+            "⠸ Fix build | project", "[ ! ] Action Required | Fix build | project",
+            "Fix build | project",
+            "⠸ Fix build | project", "Fix build | another-project", "Fix build | project",
+        ] {
+            vm.applyResult(scan(title: title, focusedPaneID: 2))
         }
         #expect(mock.notifiedAgents.isEmpty)
         #expect(vm.unreadPaneIDs.isEmpty)

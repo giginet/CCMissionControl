@@ -47,14 +47,26 @@ nonisolated struct CodexDetector: AgentDetector {
     func status(for detection: AgentDetection, pane: WezTermPane) -> Agent.Status {
         let status = Self.status(fromTitle: pane.title)
         guard status == .unknown else { return status }
-        // The default ["spinner", "project"] title drops the spinner while idle.
-        // Limit this fallback to a confirmed Codex pane with a matching project title;
-        // arbitrary titles (including shell titles) must not imply completion.
+        // Codex drops the spinner while idle, leaving either the project alone or
+        // "thread title | project". Only infer idle when the project matches this pane.
         let cwd = pane.cwd.hasPrefix("file://") ? URL(string: pane.cwd)?.path : pane.cwd
         guard let cwd, !cwd.isEmpty else { return .unknown }
         let project = (cwd as NSString).lastPathComponent
+        guard !project.isEmpty else { return .unknown }
         let title = pane.title.trimmingCharacters(in: .whitespacesAndNewlines)
-        return !project.isEmpty && title == project ? .idle : .unknown
+        // Codex CLI 0.160 abbreviates project items to 24 characters, including "...".
+        let abbreviatedProject = project.count > 24 ? String(project.prefix(21)) + "..." : project
+        for projectTitle in [project, abbreviatedProject] {
+            if title == projectTitle { return .idle }
+            let suffix = " | " + projectTitle
+            if title.hasSuffix(suffix),
+                !title.dropLast(suffix.count).trimmingCharacters(in: .whitespacesAndNewlines)
+                    .isEmpty
+            {
+                return .idle
+            }
+        }
+        return .unknown
     }
 
     static func status(fromTitle title: String) -> Agent.Status {
@@ -88,7 +100,7 @@ nonisolated struct CodexDetector: AgentDetector {
         let flagOptions: Set<String> = [
             "--strict-config", "--oss", "--approve-for-me", "--full-auto",
             "--dangerously-bypass-approvals-and-sandbox", "--dangerously-bypass-hook-trust",
-            "--search", "--no-alt-screen",
+            "--search", "--no-alt-screen", "--worktree", "--no-daemon",
         ]
         let nonInteractiveCommands: Set<String> = [
             "exec", "e", "review", "login", "logout", "mcp", "plugin", "mcp-server",

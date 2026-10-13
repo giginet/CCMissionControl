@@ -39,6 +39,10 @@ struct AgentDetectorTests {
         ["codex", "--model=gpt-test", "hello"], ["codex", "-mtest"],
         ["codex", "--", "app-server"], ["codex", "-c", "key=exec", "hello"],
         ["codex", "--remote", "unix://"],
+        ["codex", "--worktree"], ["codex", "--no-daemon"],
+        ["codex", "--worktree", "--add-dir", "/another project"],
+        ["codex", "--worktree", "resume", "--last"],
+        ["codex", "--no-daemon", "--worktree", "fork", "abc"],
     ])
     func interactiveArguments(_ arguments: [String]) {
         #expect(CodexDetector.isInteractive(arguments))
@@ -49,9 +53,29 @@ struct AgentDetectorTests {
         ["codex", "-C", "/tmp", "review"], ["codex", "--model=test", "exec"],
         ["codex", "--help"], ["codex", "resume", "--help"], ["codex", "--version"],
         ["codex", "--unknown-option", "app-server"], ["codex", "-C"], [],
+        ["codex", "--worktree", "exec", "hello"],
+        ["codex", "--no-daemon", "app-server"], ["codex", "--worktree", "--help"],
     ])
     func excludesNonInteractiveArguments(_ arguments: [String]) {
         #expect(!CodexDetector.isInteractive(arguments))
+    }
+
+    @Test func detectsAllSixSessionsIncludingWorktrees() {
+        let arguments = [
+            ["codex", "resume", "--last"], ["codex", "--worktree"], ["codex"],
+            ["codex", "--worktree"], ["codex", "--worktree", "--add-dir", "/another project"],
+            ["codex"],
+        ]
+        let lines = arguments.indices.map { "\($0 + 1) 0 ttys00\($0 + 1) codex" }
+        let tree = ProcessTree(
+            parsing: "PID PPID TTY COMM\n" + lines.joined(separator: "\n"),
+            argumentsByPID: Dictionary(
+                uniqueKeysWithValues: arguments.enumerated().map { ($0.offset + 1, $0.element) }))
+        let agents = AgentScanner.agents(
+            panes: (1...6).map { pane($0) }, tree: tree, focusedPaneID: nil)
+        #expect(agents.count == 6)
+        #expect(Set(agents.compactMap(\.processID)) == Set(1...6))
+        #expect(agents.allSatisfy { $0.kind == .codex })
     }
 
     @Test func unknownArgumentsAndLookalikesAreExcluded() {
