@@ -68,10 +68,10 @@ Codex activity is inferred from the raw WezTerm pane title, including formats ob
 | `Ready` | `idle` |
 | `[ ! ] Action Required` or `[ . ] Action Required` | `waiting` (approval or input needed) |
 | Plain project name matching the pane’s working directory name | `idle` (default title format) |
-| `Thread title | project` with a matching project name | `idle` |
+| `Thread title \| project` with two nonempty items | `idle`, including sessions resumed from another directory |
 | Other unrecognized titles | `unknown` |
 
-Text status items must be first and either stand alone or be followed by ` | ` and the other title items. Title parsing is a heuristic: custom titles, terminal overrides, and future Codex versions can make status unavailable or inaccurate. Titles without an activity marker are treated as idle only when the project item matches the working directory name of a confirmed Codex pane, either alone or after a nonempty thread title. Codex's 24-character project abbreviation (21 characters followed by `...`) is also supported. A custom title that always shows a matching project item can therefore be misclassified; use an explicit status title for clearer detection.
+Text status items must be first and either stand alone or be followed by ` | ` and the other title items. Title parsing is a heuristic: custom titles, terminal overrides, and future Codex versions can make status unavailable or inaccurate. In a confirmed Codex pane, `Thread title | project` is treated as idle even when the project differs from the pane's working directory, as can happen with `codex resume`. Codex's 24-character project abbreviation (21 characters followed by `...`) is also supported. A project-only title or a title with additional items still requires a matching working directory name. Status items in other positions remain `unknown`. A custom title that always resembles an idle title can be misclassified; use an explicit status title for clearer detection.
 
 ### Codex title configuration
 
@@ -82,7 +82,7 @@ For explicit idle and running status, add or update this setting in your Codex `
 terminal_title = ["status", "project"]
 ```
 
-Merge this into an existing `[tui]` section if present. CCMissionControl does not change your Codex configuration. Spinner/project titles, with or without a thread title, are supported without configuration when the project item matches the pane’s working directory name. If Codex uses a different project name (for example, a repository root rather than the current subdirectory), titles without an activity marker remain `unknown`; the explicit status setting avoids this ambiguity. See the [official title configuration example](https://learn.chatgpt.com/docs/config-file/config-sample).
+Merge this into an existing `[tui]` section if present. CCMissionControl does not change your Codex configuration. Spinner and `Thread title | project` titles are supported without configuration, including sessions resumed from another directory. A project-only idle title still requires a matching pane working directory name; the explicit status setting avoids this ambiguity. See the [official title configuration example](https://learn.chatgpt.com/docs/config-file/config-sample).
 
 Only a directly observed `running` → `idle` transition for the same session produces a completion notification. Entering `waiting` or `unknown`, or moving from `waiting` directly to `idle`, does not. Two-second polling may miss short turns. Hooks and App Server state integration are not included.
 

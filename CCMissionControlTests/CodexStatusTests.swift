@@ -62,7 +62,7 @@ struct CodexStatusTests {
             ("file:///tmp/project", "Fix build | project", .idle),
             ("file:///tmp/project", "Fix build | add tests | project", .idle),
             ("file:///tmp/project", "  Fix build | project\n", .idle),
-            ("file:///tmp/project", "Fix build | another-project", .unknown),
+            ("file:///tmp/project", "Fix build | another-project", .idle),
             ("file:///tmp/project", "Fix build | project | extra", .unknown),
             ("file:///tmp/project", "Fix build | proj...", .unknown),
             ("file:///tmp/project", " | project", .unknown),
@@ -99,6 +99,38 @@ struct CodexStatusTests {
                 cwd: "file:///tmp/long-project-name-for-title-tests/",
                 ttyName: "/dev/ttys001", isActive: false)
             #expect(detector.status(for: detection, pane: pane) == expected)
+        }
+    }
+
+    @Test func resumedThreadTitleDoesNotRequireMatchingPaneDirectory() {
+        let tree = ProcessTree(
+            parsing: "PID PPID TTY COMM\n100 1 ttys001 codex",
+            argumentsByPID: [100: ["codex", "resume"]])
+        for cwd in ["file:///tmp/current-project/", "/tmp/current-project", ""] {
+            for (title, expected) in [
+                ("Update guidelines | original-project", Agent.Status.idle),
+                ("Update guidelines | long-project-name-for...", .idle),
+                ("⠸ Update guidelines | long-project-name-for...", .running),
+                ("Working | Update guidelines | original-project", .running),
+                ("[ ! ] Action Required | Update guidelines | original-project", .waiting),
+                ("original-project", .unknown),
+                ("custom title", .unknown),
+                ("", .unknown),
+                (" | original-project", .unknown),
+                ("Update guidelines | ", .unknown),
+                ("Update guidelines | original-project | extra", .unknown),
+                ("Update guidelines | Ready", .unknown),
+                ("Update guidelines | Working", .unknown),
+                ("Update guidelines | [ ! ] Action Required", .unknown),
+                ("Update guidelines | proj...", .unknown),
+            ] {
+                let pane = WezTermPane(
+                    paneId: 1, tabId: 1, workspace: "default", title: title,
+                    cwd: cwd, ttyName: "/dev/ttys001", isActive: false)
+                let agents = AgentScanner.agents(panes: [pane], tree: tree, focusedPaneID: nil)
+                #expect(agents.count == 1)
+                #expect(agents.first?.status == expected)
+            }
         }
     }
 
@@ -182,7 +214,7 @@ struct CodexNotificationPipelineTests {
         for title in [
             "⠸ Fix build | project", "[ ! ] Action Required | Fix build | project",
             "Fix build | project",
-            "⠸ Fix build | project", "Fix build | another-project", "Fix build | project",
+            "⠸ Fix build | project", "custom title", "Fix build | project",
         ] {
             vm.applyResult(scan(title: title, focusedPaneID: 2))
         }
@@ -203,10 +235,44 @@ struct CodexNotificationPipelineTests {
         #expect(vm.unreadPaneIDs.isEmpty)
     }
 
-    private func scan(title: String, focusedPaneID: Int?) -> [Agent] {
+    @Test func resumedThreadInAnotherDirectoryNotifiesOnceOnCompletion() {
+        let mock = MockNotificationService()
+        let vm = AgentListViewModel(notificationService: mock)
+        for title in [
+            "Update guidelines | long-project-name-for...",
+            "⠸ Update guidelines | long-project-name-for...",
+            "Update guidelines | long-project-name-for...",
+            "Update guidelines | long-project-name-for...",
+        ] {
+            vm.applyResult(scan(title: title, focusedPaneID: 2, arguments: ["codex", "resume"]))
+        }
+        #expect(mock.notifiedAgents.count == 1)
+        #expect(vm.unreadPaneIDs == [1])
+    }
+
+    @Test func resumedThreadDoesNotNotifyAfterWaitingOrUnknown() {
+        let mock = MockNotificationService()
+        let vm = AgentListViewModel(notificationService: mock)
+        for title in [
+            "⠸ Update guidelines | another-project",
+            "[ ! ] Action Required | Update guidelines | another-project",
+            "Update guidelines | another-project",
+            "⠸ Update guidelines | another-project",
+            "Update guidelines | Ready",
+            "Update guidelines | another-project",
+        ] {
+            vm.applyResult(scan(title: title, focusedPaneID: 2, arguments: ["codex", "resume"]))
+        }
+        #expect(mock.notifiedAgents.isEmpty)
+        #expect(vm.unreadPaneIDs.isEmpty)
+    }
+
+    private func scan(title: String, focusedPaneID: Int?, arguments: [String] = ["codex"])
+        -> [Agent]
+    {
         let tree = ProcessTree(
             parsing: "PID PPID TTY COMM\n100 1 ttys001 codex",
-            argumentsByPID: [100: ["codex"]])
+            argumentsByPID: [100: arguments])
         let pane = WezTermPane(
             paneId: 1, tabId: 10, workspace: "default", title: title,
             cwd: "file:///tmp/project", ttyName: "/dev/ttys001", isActive: true)
