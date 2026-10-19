@@ -47,14 +47,39 @@ nonisolated struct CodexDetector: AgentDetector {
     func status(for detection: AgentDetection, pane: WezTermPane) -> Agent.Status {
         let status = Self.status(fromTitle: pane.title)
         guard status == .unknown else { return status }
-        // The default ["spinner", "project"] title drops the spinner while idle.
-        // Limit this fallback to a confirmed Codex pane with a matching project title;
-        // arbitrary titles (including shell titles) must not imply completion.
+        let title = pane.title.trimmingCharacters(in: .whitespacesAndNewlines)
+        let items = title.components(separatedBy: " | ")
+        // A status item in another position is a custom title, not the idle format.
+        guard !items.dropFirst().contains(where: { Self.status(fromTitle: $0) != .unknown }) else {
+            return .unknown
+        }
+        // A resumed thread can retain its original project while the TUI runs in a
+        // different directory. Recognize "thread title | project" independently of cwd.
+        if items.count == 2,
+            items.allSatisfy({ !$0.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }),
+            !items[1].hasSuffix("...") || items[1].count == 24
+        {
+            return .idle
+        }
+        // Codex drops the spinner while idle, leaving either the project alone or
+        // additional title items. For these formats, require a matching project.
         let cwd = pane.cwd.hasPrefix("file://") ? URL(string: pane.cwd)?.path : pane.cwd
         guard let cwd, !cwd.isEmpty else { return .unknown }
         let project = (cwd as NSString).lastPathComponent
-        let title = pane.title.trimmingCharacters(in: .whitespacesAndNewlines)
-        return !project.isEmpty && title == project ? .idle : .unknown
+        guard !project.isEmpty else { return .unknown }
+        // Codex CLI 0.160 abbreviates project items to 24 characters, including "...".
+        let abbreviatedProject = project.count > 24 ? String(project.prefix(21)) + "..." : project
+        for projectTitle in [project, abbreviatedProject] {
+            if title == projectTitle { return .idle }
+            let suffix = " | " + projectTitle
+            if title.hasSuffix(suffix),
+                !title.dropLast(suffix.count).trimmingCharacters(in: .whitespacesAndNewlines)
+                    .isEmpty
+            {
+                return .idle
+            }
+        }
+        return .unknown
     }
 
     static func status(fromTitle title: String) -> Agent.Status {
@@ -88,7 +113,7 @@ nonisolated struct CodexDetector: AgentDetector {
         let flagOptions: Set<String> = [
             "--strict-config", "--oss", "--approve-for-me", "--full-auto",
             "--dangerously-bypass-approvals-and-sandbox", "--dangerously-bypass-hook-trust",
-            "--search", "--no-alt-screen",
+            "--search", "--no-alt-screen", "--worktree", "--no-daemon",
         ]
         let nonInteractiveCommands: Set<String> = [
             "exec", "e", "review", "login", "logout", "mcp", "plugin", "mcp-server",
