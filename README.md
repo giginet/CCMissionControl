@@ -20,6 +20,7 @@ A macOS menu bar app that monitors [Claude Code](https://docs.anthropic.com/en/d
 - Menu bar icon showing session count and activity status, including unknown activity
 - macOS notifications and unread badges when a known running session becomes idle in the background
 - Click to switch to the agent's WezTerm tab and pane, auto-clear unread badges on focus return
+- Right-click a session to close its WezTerm tab and all sessions in it; split tabs require confirmation
 - Dropdown and floating window modes
 - Settings: notifications, Launch at Login, custom WezTerm path
 
