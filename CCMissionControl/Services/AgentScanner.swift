@@ -121,6 +121,14 @@ enum AgentScanner {
         }
     }
 
+    nonisolated static func killPane(id: Int) async throws {
+        guard let wezterm = findWezTerm() else { throw ScanError.wezTermNotFound }
+        _ = try await ShellExecutor.run(
+            executablePath: wezterm,
+            arguments: ["cli", "kill-pane", "--pane-id", String(id)]
+        )
+    }
+
     // MARK: - Private
 
     private nonisolated static let wezTermPaths = [
@@ -137,7 +145,7 @@ enum AgentScanner {
         return wezTermPaths.first { FileManager.default.isExecutableFile(atPath: $0) }
     }
 
-    private nonisolated static func fetchPanes() async throws -> [WezTermPane] {
+    nonisolated static func fetchPanes() async throws -> [WezTermPane] {
         guard let wezterm = findWezTerm() else {
             throw ScanError.wezTermNotFound
         }

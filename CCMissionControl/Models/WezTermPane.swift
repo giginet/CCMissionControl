@@ -1,6 +1,6 @@
 import Foundation
 
-struct WezTermPane: Decodable, Sendable {
+nonisolated struct WezTermPane: Decodable, Sendable {
     let paneId: Int
     let tabId: Int
     let workspace: String
