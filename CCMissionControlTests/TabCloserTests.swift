@@ -1,6 +1,7 @@
-@testable import CCMissionControl
 import Foundation
 import Testing
+
+@testable import CCMissionControl
 
 @MainActor
 struct TabCloserTests {
