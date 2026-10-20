@@ -55,7 +55,8 @@ struct AgentRowView: View {
                     Text(agent.title)
                         .font(.caption2)
                         .foregroundStyle(.tertiary)
-                        .lineLimit(1)
+                        .lineLimit(agent.kind == .codex ? nil : 1)
+                        .fixedSize(horizontal: false, vertical: agent.kind == .codex)
                 }
             }
         }
