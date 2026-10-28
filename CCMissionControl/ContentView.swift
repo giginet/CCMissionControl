@@ -112,6 +112,41 @@ final class AgentListViewModel {
 struct ContentView: View {
     @Environment(\.openSettings) private var openSettings
     let viewModel: AgentListViewModel
+    @State private var closePlan: TabClosePlan?
+    @State private var closeError: String?
+    @State private var isClosingTab = false
+    private let tabCloser = TabCloser()
+
+    private func requestClose(_ agent: Agent) {
+        isClosingTab = true
+        Task {
+            do {
+                let plan = try await tabCloser.prepare(for: agent)
+                if plan.requiresConfirmation {
+                    closePlan = plan
+                    isClosingTab = false
+                } else {
+                    await closeTab(plan)
+                }
+            } catch {
+                closeError = error.localizedDescription
+                isClosingTab = false
+            }
+        }
+    }
+
+    private func closeTab(_ plan: TabClosePlan) async {
+        isClosingTab = true
+        defer {
+            isClosingTab = false
+            viewModel.scanNow()
+        }
+        do {
+            try await tabCloser.close(plan)
+        } catch {
+            closeError = error.localizedDescription
+        }
+    }
 
     var body: some View {
         Group {
@@ -134,6 +169,15 @@ struct ContentView: View {
                         isUnread: viewModel.unreadPaneIDs.contains(agent.paneID),
                         isActive: agent.isActive
                     )
+                    .contextMenu {
+                        Button(
+                            "Close Session and Tab", systemImage: "xmark.rectangle",
+                            role: .destructive
+                        ) {
+                            requestClose(agent)
+                        }
+                        .disabled(isClosingTab || closePlan != nil)
+                    }
                     .contentShape(Rectangle())
                     .onTapGesture {
                         viewModel.markAsRead(agent)
@@ -160,6 +204,33 @@ struct ContentView: View {
                 }
                 .disabled(viewModel.isScanning)
             }
+        }
+        .alert(
+            "Close All Sessions in This Tab?",
+            isPresented: Binding(
+                get: { closePlan != nil },
+                set: { if !$0 { closePlan = nil } }
+            ), presenting: closePlan
+        ) { plan in
+            Button("Close All Sessions and Tab", role: .destructive) {
+                Task { await closeTab(plan) }
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: { plan in
+            Text(
+                "This tab contains \(plan.panes.count) panes and \(plan.sessions.count) agent sessions. All panes, including other shells and running tasks, will be terminated. Unsaved work may be lost."
+            )
+        }
+        .alert(
+            "Could Not Close Tab",
+            isPresented: Binding(
+                get: { closeError != nil },
+                set: { if !$0 { closeError = nil } }
+            )
+        ) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text(closeError ?? "")
         }
         .onAppear { viewModel.startScanning() }
     }

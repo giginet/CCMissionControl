@@ -12,11 +12,11 @@ struct Agent: Identifiable, Hashable, Sendable {
     var kind: AgentKind = .claudeCode
     var processID: Int? = nil
 
-    var sessionIdentity: SessionIdentity {
+    nonisolated var sessionIdentity: SessionIdentity {
         SessionIdentity(paneID: paneID, kind: kind, processID: processID)
     }
 
-    struct SessionIdentity: Hashable {
+    nonisolated struct SessionIdentity: Hashable, Sendable {
         let paneID: Int
         let kind: AgentKind
         let processID: Int?
